@@ -258,11 +258,15 @@ public class EditProfileFragment extends Fragment {
                 selectedUri = data.getData();
                 //ImageCropFunction();
                 selectedImagePath = ImageFilePath.getPath(getContext(), selectedUri);
-                ShareToFragment stf = new ShareToFragment();
-                final Bundle args = new Bundle();
-                args.putString("PHOTO", selectedImagePath);
-                stf.setArguments(args);
-                ((MainActivity) getActivity()).addfragment(stf, "ShareTo");
+                Picasso
+                        .with(getContext())
+                        .load(new File(selectedImagePath))
+                        .resize(dpToPx(80), dpToPx(80))
+                        .centerCrop()
+                        .error(R.drawable.ic_account_circle_black_128dp)
+                        .into(change_photo);
+                myAsyncTask = new MyAsyncTask();
+                myAsyncTask.execute();
             }
 
             else if (requestCode == REQUEST_CAMERA)
@@ -305,11 +309,8 @@ public class EditProfileFragment extends Fragment {
         selectedUri = data.getData();
         //ImageCropFunction();
         selectedImagePath = ImageFilePath.getPath(getContext(), selectedUri);
-        ShareToFragment stf = new ShareToFragment();
-        final Bundle args = new Bundle();
-        args.putString("PHOTO", selectedImagePath);
-        stf.setArguments(args);
-        ((MainActivity) getActivity()).addfragment(stf, "ShareTo");
+        myAsyncTask = new MyAsyncTask();
+        myAsyncTask.execute();
     }
 /*
     public void ImageCropFunction() {
@@ -395,6 +396,7 @@ public class EditProfileFragment extends Fragment {
             super.onPreExecute();
             running = true;
 
+            loginDBAdapter.updateUserProfPic(loginDBAdapter.getID(userName),selectedImagePath);
             progressDialog = ProgressDialog.show(getActivity(),"",
                     "Loading...");
 
