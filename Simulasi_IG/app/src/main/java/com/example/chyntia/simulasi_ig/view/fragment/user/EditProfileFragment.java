@@ -438,7 +438,7 @@ public class EditProfileFragment extends Fragment {
     }*/
 
     private void updateData(){
-        loginDBAdapter.updateUserData(loginDBAdapter.getID(userName),ep_userName.getText().toString(),ep_fullName.getText().toString(),ep_email.getText().toString(),spinner.getSelectedItem().toString());
+        loginDBAdapter.updateUserData(loginDBAdapter.getID(userName),ep_userName.getText().toString(),ep_fullName.getText().toString(),ep_email.getText().toString(),"");
     }
 
     private void checkProfPic(){
