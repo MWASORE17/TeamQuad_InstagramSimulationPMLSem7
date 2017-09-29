@@ -42,11 +42,11 @@ public class MainActivity extends AppCompatActivity{
 
         session = new SessionManager(getApplicationContext());
 
-        session.checkLogin();
+        if(session.checkLogin()){
+            changefragment(new HomeFragment(), "Home");
+            bottom_nav_bar();
+        }
 
-        changefragment(new HomeFragment(), "Home");
-
-        bottom_nav_bar();
     }
 
     public void changefragment(Fragment fragment, String tag) {
