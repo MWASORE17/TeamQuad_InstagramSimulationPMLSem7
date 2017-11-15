@@ -1,0 +1,81 @@
+ALTER TABLE `tasks` ADD `ClosedMessage` TEXT NULL AFTER `ClosedOn` ;
+
+INSERT INTO `projectmanagement`.`othermodules` (
+`OtherModuleID` ,
+`OtherModuleName`
+)
+VALUES (
+'14', 'Bisa lihat laporan'
+);
+
+============================================================
+Tgl 22 September 2015
+
+CREATE TABLE `news` (
+`NewsID` INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+`NewsTitle` VARCHAR( 200 ) NOT NULL ,
+`Description` TEXT NOT NULL ,
+`CreatedOn` DATE NOT NULL ,
+`CreatedBy` VARCHAR( 50 ) NULL ,
+`UpdateOn` DATE NOT NULL ,
+`UpdateBy` VARCHAR( 50 ) NULL ,
+`StartedDate` DATE NOT NULL ,
+`ExpiredDate` DATE NOT NULL
+) ENGINE = MYISAM ;
+
+
+INSERT INTO `projectmanagement`.`modules` (
+`ModuleID` ,
+`ModuleName`
+)
+VALUES (
+'12', 'News'
+);
+
+
+ALTER TABLE `users` ADD `EmailAddress` VARCHAR( 50 ) NULL AFTER `Password` ;
+
+===================================================================================
+Tgl 28 September 2015
+
+CREATE TABLE `versions` (
+`VersionID` INT NOT NULL ,
+`VersionName` VARCHAR( 50 ) NULL ,
+PRIMARY KEY ( `VersionID` )
+) ENGINE = MYISAM ;
+
+ALTER TABLE `tasks` ADD `VersionID` INT NOT NULL AFTER `ProjectID` ;
+
+INSERT INTO `projectmanagement`.`modules` (
+`ModuleID` ,
+`ModuleName`
+)
+VALUES (
+'13', 'Versions'
+);
+===================================================================================
+
+Tgl 05 Oktober 2015
+
+INSERT INTO `projectmanagement`.`othermodules` (
+`OtherModuleID` ,
+`OtherModuleName`
+)
+VALUES (
+'15', 'Bisa ganti tanggal mulai'
+), (
+'16', 'Bisa mengedit komentar orang lain'
+);
+
+INSERT INTO `projectmanagement`.`othermodules` (
+`OtherModuleID` ,
+`OtherModuleName`
+)
+VALUES (
+'17', 'Bisa menghapus komentar orang lain'
+);
+
+
+
+
+

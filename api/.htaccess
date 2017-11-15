@@ -1,0 +1,4 @@
+RewriteEngine on
+RewriteBase /instagram
+RewriteCond $1 !^(index\.php|install\.php|assets|sitemap.xml|robots\.txt)
+RewriteRule ^(.*)$ index.php/$1 [L]

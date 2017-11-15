@@ -1,0 +1,62 @@
+#30-12-2015 16:04
+===========================================================================================================================
+INSERT INTO `othermodules` (
+`OtherModuleID` ,
+`OtherModuleName`
+)
+VALUES (
+'18', 'Bisa pilih jenis komentar'
+), (
+'19', 'Tampilkan daftar tugas tester'
+);
+
+INSERT INTO `othermodules` (
+`OtherModuleID` ,
+`OtherModuleName`
+)
+VALUES (
+'20', 'Set status tugas menjadi checking'
+), (
+'21', 'Set status tugas menjadi checked'
+);
+
+CREATE TABLE `commenttypes` (
+`CommentTypeID` INT( 10 ) NOT NULL ,
+`CommentTypeName` VARCHAR( 50 ) NOT NULL
+) ENGINE = MYISAM ;
+
+INSERT INTO `commenttypes` (
+`CommentTypeID` ,
+`CommentTypeName`
+)
+VALUES (
+'1', 'General'
+), (
+'2', 'Laporan Bugs/Error'
+);
+
+ALTER TABLE `comments` ADD `CommentTypeID` INT( 10 ) NULL AFTER `TaskID` ;
+
+ALTER TABLE `tasks` ADD `IsChecked` TINYINT( 2 ) NOT NULL DEFAULT '0',
+ADD `StartCheckOn` DATETIME NULL ,
+ADD `FinishCheckOn` DATETIME NULL ;
+
+ALTER TABLE `commenttypes` ADD PRIMARY KEY ( `CommentTypeID` );
+
+ALTER TABLE `tasks` ADD `FinishMessage` TEXT NULL ;
+
+ALTER TABLE `tasks` ADD `StartCheckBy` VARCHAR( 50 ) NULL ,
+ADD `FinishCheckBy` VARCHAR( 50 ) NULL ;
+
+#11-03-2016 08:30
+===========================================================================================================================
+
+INSERT INTO  `othermodules` (
+`OtherModuleID` ,
+`OtherModuleName`
+)
+VALUES (
+NULL ,  'Tampilan daftar checking tugas'
+);
+
+UPDATE  `othermodules` SET  `OtherModuleName` =  'Tampilkan daftar checking tugas' WHERE  `othermodules`.`OtherModuleID` =22 LIMIT 1 ;

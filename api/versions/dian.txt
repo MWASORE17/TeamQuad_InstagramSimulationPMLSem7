@@ -1,0 +1,9 @@
+#19-maret-2016
+
+ALTER TABLE `tasks` ADD `IsCompleted` TINYINT( 1 ) NULL AFTER `FinishCheckBy` ,
+ADD `CompletedBy` VARCHAR( 50 ) NULL AFTER `IsCompleted` ,
+ADD `CompletedOn` DATETIME NULL AFTER `CompletedBy` ;
+ALTER TABLE `tasks` ADD `CompleteMessage` TEXT NULL AFTER `CompletedOn` ;
+
+INSERT INTO `taskstatus` (`TaskStatusID`, `TaskStatusName`, `Order`) VALUES ('9', 'On Testing', '9');
+INSERT INTO `taskstatus` (`TaskStatusID`, `TaskStatusName`, `Order`) VALUES ('10', 'Closed', '10');

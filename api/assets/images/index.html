@@ -1,0 +1,42 @@
+{%p%}
+Silahkan hubungi kami melalui form dibawah ini
+{%/p%}
+
+{%form method="post" id="vcontactform" action="*action*"%}
+
+{%p%}
+Nama:{%br /%}
+{%input type="text" class="required" name="vform[nama]" /%}
+{%/p%}
+
+{%p%}
+Email:{%br /%}
+{%input type="text"  class="required email" name="vform[email]" /%}
+{%/p%}
+
+{%p%}
+Pesan:{%br /%}
+{%textarea  class="required" name="vform[pesan]"%}{%/textarea%}
+{%/p%}
+
+{%p%}
+Silahkan ketik yang tampil dibawah ini{%br /%}
+*captcha*{%br /%}
+{%input type="text"  class="required" style="width:150px;" name="vform[captcha]" /%}
+{%/p%}
+
+{%p%}
+{%button type="text" class="ui"%}Kirimkan{%/button%}
+{%img class="load" style="display:none" src="*base_url*/assets/images/load.gif"%}
+{%/p%}
+{%div id="response" style="display:none"%}  {%/div%}
+{%div style="display:none"%}
+
+{%textarea id="vresponsetemplate" name="vresponsetemplate"%}
+Pesan diterima dari @nama@%}{%br /%}
+Email : @email@{%br /%}
+Pesan : @pesan@
+{%/textarea%}
+
+{%/div%}
+{%/form%}
