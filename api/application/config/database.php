@@ -48,9 +48,9 @@
 $active_group = 'default';
 $active_record = TRUE;
 
-$db['default']['hostname'] = '192.168.3.2';
+$db['default']['hostname'] = 'localhost';
 $db['default']['username'] = 'root';
-$db['default']['password'] = 'vegatech';
+$db['default']['password'] = '';
 $db['default']['database'] = 'instagram';
 $db['default']['dbdriver'] = 'mysqli';
 $db['default']['dbprefix'] = '';

@@ -16,9 +16,9 @@ class Api extends MY_Controller{
 		if(!$token){
 			return "";
 		}
-		$username = $this->db->where(COL_TOKEN,$token)->get(TBL_USERINFORMATION)->row_array();
+		$username = $this->db->where('Token',$token)->get('users')->row_array();
 		if(!empty($username)){
-			return $username[COL_USERNAME];
+			return $username['UserName'];
 		}else{
 			return "";
 		}
@@ -158,35 +158,31 @@ class Api extends MY_Controller{
 		$res = array('error'=>0,'message'=>'Email anda berhasil didaftarkan');
 		echo json_encode($res);
 	}
-		
-	function changepassword(){
-		$this->load->model('muser');
-		$key = $this->input->get('Password');
-		$email = $this->input->get('Email');
-		$row = $this->muser->GetAll(array('ui.'.COL_EMAIL=>$email))->row();
-		$data = array(COL_PASSWORD=>md5($key));
-		$this->muser->update($data,$row->UserName);
-		
-		$this->load->library('email',GetEmailConfig());
-		#$this->load->library('email',$config);
-		$this->email->set_newline("\r\n");
-		
-		if(IsNotifActive(NOTIF_PASSWORD_CHANGED)){
-			$pref = GetNotif(NOTIF_PASSWORD_CHANGED);
-			
-			$message = ReplaceUserEmail($pref->Content, $row->UserName);
-			$subject = ReplaceUserEmail($pref->Subject, $row->UserName);
-			
-			$this->email->from($pref->SenderEmail, $pref->SenderName);
-			$this->email->to($row->Email);
-			$this->email->subject($subject);
-			$this->email->message($message);
-			$this->email->send();
-		}
-		
-		ShowJsonSuccess($data);
-	}
 	
+	function Getaccount(){
+		$token = $this->input->post('token');
+		if(empty($token)){
+			ShowJsonError('Token kosong');
+			return;
+		}
+		$username = $this->GetUserByToken($token);
+
+		if(empty($username)){
+			ShowJsonError('Username tidak ditemukan');
+			return;
+		}
+		$this->db->where('UserName', $username);
+		$a = $this->db->get('users')->row_array();
+		$res = array(
+			'UserName' => $a['UserName'],
+			'Email' => $a['Email'],
+			'Name' => $a['Name'],
+			'ImagePath' => $a['ImagePath'],
+		);
+		
+		echo json_encode($res);
+	}
+
 	function CheckLogin(){
 		$this->load->library('user_agent');
 		
@@ -329,89 +325,59 @@ class Api extends MY_Controller{
 		$this->load->view(MLD_PREFIX.'/findresumes',$data);
 	}
 	
-	function updateaccountinformation(){
-		$this->load->model('muser');
+	function updateaccount(){
+		$token = $this->input->post('token');
+		if(empty($token)){
+			ShowJsonError('Token kosong');
+			return;
+		}
+		if(empty($this->input->post('Email'))){
+			ShowJsonError('Email kosong');
+			return;
+		}
+		$username = $this->GetUserByToken($token);
+
+		if(empty($username)){
+			ShowJsonError('Username tidak ditemukan');
+			return;
+		}
+		
+		$insertdata = array(
+			'Name'=>$this->input->post('Name') ? $this->input->post('Name') : null,
+			'ImagePath'=>$this->input->post('ImagePath') ? $this->input->post('ImagePath') : null,
+			'Email'=>$this->input->post('Email') ? $this->input->post('Email') : null,
+		);
+		$this->db->where('UserName',$username);
+		$this->db->update('users',$insertdata);
+	
+		ShowJsonSuccess('Berhasil simpan');
+	}
+
+	function getChangePassword(){
 		$token = $this->input->post('token');
 		if(empty($token)){
 			ShowJsonError('Token kosong');
 			return;
 		}
 		$username = $this->GetUserByToken($token);
-		
-		$data['result'] = $result = $this->muser->GetAll(array('p.'.COL_USERNAME=>$username))->row();
-		
-		$insertdata = array(
-			COL_USERNAME=>$username,
-		);
-		
-		$isBankInfo = $this->input->post('isBankInfo');
-		if($isBankInfo > 0){
-			$bankdetail = array(
-				COL_BANKNAME => $this->input->post('BankName'),
-				COL_BANKACCOUNTNAME => $this->input->post('BankAccountName'),
-				COL_BANKACCOUNTNUMBER => $this->input->post('BankAccountNumber'),
-			);
-			
-			$this->muser->updatemeta($bankdetail,$username);
-			ShowJsonSuccess('Berhasil simpan');
+		if(empty($username)){
+			ShowJsonError('Username tidak ditemukan');
 			return;
 		}
 		
-		if($this->input->post('Password')!=""){
-			$insertdata['Password'] = md5($this->input->post('Password'));
+		if(empty($this->input->post('Password'))){
+			ShowJsonError('Password kosong');
+			return;
 		}
-		$this->muser->update($insertdata,$username);
-		
-		$datadetail = array(
-                COL_FIRSTNAME => $this->input->post('FirstName'),
-				COL_LASTNAME => $this->input->post('LastName'),
-				COL_COUNTRYID => $this->input->post('CountryID'),
-				COL_PROVINCEID => $this->input->post('ProvinceID'),
-				COL_CITYID=> $this->input->post('CityID'),
-				COL_EMAIL => $this->input->post('Email'),
-				COL_ADDRESS => $this->input->post('Address'),
-				COL_PHONENUMBER => $this->input->post('PhoneNumber'),
-				COL_HP => $this->input->post('HP'),
-				COL_POSTALCODE => $this->input->post('PostalCode'),
-				COL_PROFILEPICTURE => $this->input->post('MediaID'),
-				COL_GENDER => $this->input->post('Gender'),
-				'BannerID' => $this->input->post('BannerID'),
-				COL_MASTERCOMPANYID => $this->input->post('MasterCompanyID'),
-				COL_COMPANYINDUSTRYID => $this->input->post('CompanyIndustryID'),
-				COL_COMPANYTYPEID=> $this->input->post('CompanyTypeID'),
-				COL_COMPANYWEBSITE => $this->input->post('CompanyWebsite'),
-				COL_OTHERINDUSTRYNAME => $this->input->post('OtherIndustryName'),
-				COL_OTHERCOMPANYTYPENAME => $this->input->post('OtherCompanyTypeName'),
-				COL_COMPANYDESCRIPTION=> $this->input->post('CompanyDescription'),
-				COL_RECENTSALARY=> $this->input->post('DeliveryFee'),
-        );
-		
-		$this->muser->updatemeta($datadetail,$username);
-		
-		ShowJsonSuccess('Berhasil simpan');
-	}
 
-	function getChangePassword(){
-		$this->load->model('muser');
-		$token = $this->input->get('token');
-		if(empty($token)){
-			ShowJsonError('Token kosong');
-			return;
-		}
-		$username = $this->GetUserByToken($token);
-		$result = $this->muser->GetAll(array('p.'.COL_USERNAME=>$username))->row_array();
-		
-		if($this->input->get('Password') != $this->input->get('RPassword')){
+		if($this->input->post('Password') != $this->input->post('RPassword')){
 			ShowJsonError('Password baru tidak sama');
 			return;
 		}
 		
-		#$row = $this->muser->GetAll(array('ui.'.COL_EMAIL=>$email))->row();
-		#$data = array(COL_PASSWORD=>md5($this->input->post('Password')));
-		#$this->muser->update($data,$row->UserName);
-		
-		$rpassword = $result[COL_PASSWORD];
-		$postpassword = $this->input->get('OldPassword');
+		$result = $this->db->where('UserName',$username)->get('users')->row_array();
+		$rpassword = $result['Password'];
+		$postpassword = $this->input->post('OldPassword');
 		
 		if($rpassword != md5($postpassword)){
 			ShowJsonError('Password lama tidak valid');
@@ -419,10 +385,10 @@ class Api extends MY_Controller{
 		}
 		
 		$insertdata = array(
-			COL_USERNAME=>$username,
+			'Password'=>md5($this->input->post('Password')),
 		);
-		$insertdata['Password'] = md5($this->input->get('Password'));
-		$this->muser->update($insertdata,$username);
+		$this->db->where('UserName',$username);
+		$this->db->update('users',$insertdata);
 		ShowJsonSuccess('Berhasil ubah password');
 	}
 
@@ -778,37 +744,5 @@ class Api extends MY_Controller{
 			//ShowJsonSuccess("Bid berhasil");
 			}
 		}
-	}
-
-	function GetAllUser(){
-		$role = $this->input->get('role');
-		$child = $this->input->get('child');
-		$this->load->model('muser');
-		if($role){
-			$this->db->where('p.'.COL_ROLEID,$role);
-		}
-		if($child){
-			//$this->db->where('ui.'.COL_PARENTUSERNAME.' IS NOT NULL');
-		}
-		$a = $this->muser->GetAll();
-		$res = array();
-		foreach($a->result_array() as $d){
-			$pp = GetMedia($d[COL_PROFILEPICTURE]);
-			if(!empty($pp)){
-				$pp = media_url().$pp->MediaPath;
-				$pp = MY_ASSETURL.'/images/timthumb.php?src='.$pp.'&w=350&h=350&q=100';
-			}else{
-				$pp = "";
-			}
-			$d['ProfilePicture'] = $pp;
-			if($child){
-				$countanak = $this->db->where(COL_PARENTUSERNAME,$d[COL_USERNAME])->select('COUNT(*) as Jum')->get(TBL_USERINFORMATION)->row_array();
-				if(!empty($countanak['Jum'])){
-					continue;
-				}
-			}
-			$res[] = $d;
-		}
-		echo json_encode($res);
 	}
 }
