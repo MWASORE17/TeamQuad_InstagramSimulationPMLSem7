@@ -23,6 +23,18 @@ class Api extends MY_Controller{
 			return "";
 		}
 	}
+
+	function GetUser($username){
+		if(!$username){
+			return "";
+		}
+		$username = $this->db->where('UserName',$username)->get('users')->row_array();
+		if(!empty($username)){
+			return $username['UserName'];
+		}else{
+			return "";
+		}
+	}
 	
 	function GetUserByEmail(){
 		$email = $this->input->get('email');
@@ -37,48 +49,64 @@ class Api extends MY_Controller{
 		}
 	}
 	
-	
-	function GetPost(){
-		$this->load->model('mpost');
-		$this->load->model('mkategori');
-		$this->load->model('muser');
-		$this->load->model('mtag');
-		$this->load->library('typography');
-		$this->load->helper('currency');
-		
-		$data['l'] = $l = $this->input->get('l');
-		if(!empty($l)){
-			$this->db->where('p.'.COL_LANGUAGEID,$l);
+	function addPost(){
+		$token = $this->input->post('token');
+		if(empty($token)){
+			ShowJsonError('Token kosong');
+			return;
 		}
-		$data['r'] = $this->mpost->GetAllPost(array('p.'.COL_POSTTYPEID=>BERITANO));
-		$this->load->view(MLD_PREFIX.'/getpost',$data);
+		$username = $this->GetUserByToken($token);
+
+		if(empty($username)){
+			ShowJsonError('Username tidak ditemukan');
+			return;
+		}
+
+		$insertdata = array(
+			'UserName'=>$username,
+			'ImagePath'=>$this->input->post('ImagePath'),
+			'Content'=>$this->input->post('Content') ? $this->input->post('Content') : null,
+			'Location'=>$this->input->post('Location') ? $this->input->post('Location') : null,
+			'CreatedOn'=> date('Y-m-d H:i:s'),
+		);
+		$this->db->insert('posts',$insertdata);
+	
+		ShowJsonSuccess('Berhasil simpan');
 	}
 	
-	function GetPage(){
-		$id = $this->input->get('id');
-		$lang = $this->input->get('lang');
-		$gadget = $this->input->get('gadget');
-				
-		$gadgetid = $data['gadgetid'] = $gadget;
-		
-		$l = $data['l'] = $lang;
-		$this->db->where(COL_FORMID,$id);
-		if($l){
-			$this->db->join(TBL_LANGUAGES,''.TBL_LANGUAGES.'.'.COL_LANGUAGEID.' = '.TBL_FORMS.'.'.COL_LANGUAGEID.'','left')->where(''.TBL_FORMS.'.'.COL_LANGUAGEID.'',$l);
+	function getPostUser(){
+		$username = $this->input->get('username');
+		if(empty($username)){
+			ShowJsonError('UserName kosong');
+			return;
 		}
-		if($gadgetid){
-			if($gadgetid == DEFAULTGADGETID){
-				$data['r'] = $r = $this->db->where("((".COL_GADGETID." = '".$gadgetid."') OR (".COL_GADGETID." IS NULL))")->get(TBL_FORMS);
-			}else{
-				$data['r'] = $r = $this->db->where(array(COL_GADGETID=>$gadgetid))->get(TBL_FORMS);
-			}
-		}else{
-			$data['r'] = $r = $this->db->where("((".COL_GADGETID." = '".DEFAULTGADGETID."') OR (".COL_GADGETID." IS NULL))")->get(TBL_FORMS);
+		$username = $this->GetUser($username);
+
+		if(empty($username)){
+			ShowJsonError('Username tidak ditemukan');
+			return;
 		}
 		
-		$this->load->view(MLD_PREFIX.'/getpage',$data);
+		$this->db->where('UserName',$username);
+		$this->db->order_by('CreatedOn','asc');
+		$post = $this->db->get('posts');
+		
+		$data = array();
+		$i = 0;
+		foreach($post->result_array() as $d){
+			$data[$i] = array(
+							'PostID' => $d['PostID'],
+							'ImagePath' => $d['ImagePath'],
+							'Content' => $d['Content'],
+							'Location' => $d['Location'],
+							'CreatedOn' => $d['CreatedOn']
+						);
+			$i++;
+		}
+		
+		echo json_encode($data);
 	}
-	
+		
 	function GetComment(){
 		$postid = $this->input->get('postid');
 		$this->db->where(array(COL_ISVERIFIED=>1));
