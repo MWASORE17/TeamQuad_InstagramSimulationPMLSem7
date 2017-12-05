@@ -55,15 +55,15 @@ public class TabYouViewFragment extends Fragment {
         userName = user.get(SessionManager.KEY_USERNAME);
 
         rv = (RecyclerView) view.findViewById(R.id.recycler_view);
-        setupRV();
+//        setupRV();
 
         btn = (Button) view.findViewById(R.id.btn);
     }
 
     private void setupRV(){
 
-        FriendRecommendationRVAdapter adapter = new FriendRecommendationRVAdapter(loginDBAdapter.getUserRecommendation(loginDBAdapter.getID(userName)), getActivity().getApplication());
+       /* FriendRecommendationRVAdapter adapter = new FriendRecommendationRVAdapter(loginDBAdapter.getUserRecommendation(loginDBAdapter.getID(userName)), getActivity().getApplication());
         rv.setAdapter(adapter);
-        rv.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
+        rv.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));*/
     }
 }

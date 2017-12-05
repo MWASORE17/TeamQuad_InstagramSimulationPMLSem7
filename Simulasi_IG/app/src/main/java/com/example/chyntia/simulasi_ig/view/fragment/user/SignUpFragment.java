@@ -15,6 +15,15 @@ import android.widget.Toast;
 import com.example.chyntia.simulasi_ig.R;
 import com.example.chyntia.simulasi_ig.view.activity.AuthenticationActivity;
 import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
+import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
+import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.response.CResponse;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import static android.R.attr.data;
 
 /**
  * Created by Chyntia on 6/7/2017.
@@ -94,10 +103,10 @@ public class SignUpFragment extends Fragment {
             _isvalid = false;
             til_username.setErrorEnabled(true);
             til_username.setError("Username is required");
-        } else if (Username.length() < 7) {
+        } else if (Username.length() < 4) {
             _isvalid = false;
             til_username.setErrorEnabled(true);
-            til_username.setError("Username minimal 7");
+            til_username.setError("Username minimal 4");
 
         } else if (loginDBAdapter.isExist(Username)) {
             _isvalid = false;
@@ -122,10 +131,10 @@ public class SignUpFragment extends Fragment {
             _isvalid = false;
             til_pass.setErrorEnabled(true);
             til_pass.setError("Password is required");
-        } else if (!AuthenticationActivity.ispasswordvalid(Password)) {
+        } else if (Password.length() < 4) {
             _isvalid = false;
             til_pass.setErrorEnabled(true);
-            til_pass.setError("Password is not valid. Password must contains at least 1 lowercase, 1 uppercase, 1 number, 1 special character and minimum 8 characters");
+            til_pass.setError("minimum 4 characters");
         } else if (TextUtils.isEmpty(confirm_pass)) {
             _isvalid = false;
             til_confirm_pass.setErrorEnabled(true);
@@ -138,14 +147,32 @@ public class SignUpFragment extends Fragment {
 
         if (_isvalid) {
             // Save the Data_Follow in Database
-            loginDBAdapter.insertEntry(Username, Fullname, Email, null, Password, "");
-            Toast.makeText(getContext(), "Account Successfully Created ", Toast.LENGTH_LONG).show();
-            username.setText("");
-            fullname.setText("");
-            email.setText("");
-            password.setText("");
-            confirm_password.setText("");
-            AuthenticationActivity.mViewPager.setCurrentItem(0);
+            ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+            Call<CResponse> call = apiRoute.register(Username, Password, confirm_pass, Email);
+            call.enqueue(new Callback<CResponse>() {
+                @Override
+                public void onResponse(Call<CResponse> call, Response<CResponse> response) {
+                    CResponse data = response.body();
+                    if(data.isStatus()){
+                        Toast.makeText(getContext(), "Account Successfully Created ", Toast.LENGTH_LONG).show();
+                        username.setText("");
+                        fullname.setText("");
+                        email.setText("");
+                        password.setText("");
+                        confirm_password.setText("");
+                        AuthenticationActivity.mViewPager.setCurrentItem(0);
+                    }
+                    else{
+                        Toast.makeText(getContext(), data.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<CResponse> call, Throwable t) {
+                    Toast.makeText(getContext(), t.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
+//            loginDBAdapter.insertEntry(Username, Fullname, Email, null, Password, "");
         }
     }
 }

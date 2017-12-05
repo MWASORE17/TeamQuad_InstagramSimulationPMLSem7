@@ -18,9 +18,11 @@ class Api extends MY_Controller{
 		}
 		$username = $this->db->where('Token',$token)->get('users')->row_array();
 		if(!empty($username)){
-			return $username['UserName'];
+			$data = array("status" => true, "message" => "Get User Success", "data" => $username);
+			newJson($data);
 		}else{
-			return "";
+			$data = array("status" => false, "message" => "Get User Failed");
+			newJson($data);
 		}
 	}
 
@@ -30,9 +32,11 @@ class Api extends MY_Controller{
 		}
 		$username = $this->db->where('UserName',$username)->get('users')->row_array();
 		if(!empty($username)){
-			return $username['UserName'];
+			$data = array("status" => true, "message" => "Get User Success", "data" => $username);
+			newJson($data);
 		}else{
-			return "";
+			$data = array("status" => false, "message" => "Get User Failed");
+			newJson($data);
 		}
 	}
 	
@@ -218,7 +222,8 @@ class Api extends MY_Controller{
 		$password = $this->input->post('Password');
 		
 		if(!$username){
-			echo json_encode(array('Status' => 2,'token' => "",'Message'=>"Username tidak falid"));
+			$data = array("status" => false, "message" => "Username tidak valid");
+			newJson($data);
 			return;
 		}
 		
@@ -228,26 +233,24 @@ class Api extends MY_Controller{
 		$row = $this->db->get('users u')->row_array();
 		
 		$ceklogin = $this->muser->CheckLogin($username,$password);
-        $status = 1;
+    $status = 1;
 		$token = "";
 		$message = "";
 				
-        if($ceklogin){
-			$status = 1;
-            $message = "Login Berhasil";
+    if($ceklogin){
 			$token = vEncode($username);
-			$data = array('Token' => $token);
-						
+			$data = array('Token' => $token);		
 			$this->db->where(COL_USERNAME,$row[COL_USERNAME]);
 			$this->db->update('users',$data);
-			 
-        }else{
-            $status = 2;
-			$message = "Username atau Password tidak tepat";
-			$token = "error";
-        }
-        
-        echo json_encode(array('Status' => $status,'token' => $token,'message'=>$message));
+			$data = new StdClass();
+			$data->token = $token;
+			$data = array("status" => true, "message" => "Login Berhasil", "data" => $token);
+			
+    }else{
+      $data = array("status" => false, "message" => "Username / Password tidak tepat");
+			
+    }
+    newJson($data);
 	}
 	
 	function postRegisterUser(){
@@ -278,11 +281,12 @@ class Api extends MY_Controller{
 				
 		$cekuser = $this->muser->IsUsernameExist($username);
 		if($cekuser){
-			$error .= 'UserName Already Registered'."<br />";
+			$error .= 'UserName Already Registered';
 		}
 			
 		if(!empty($error)){
-			showJSONerror($error);
+			$data = array("status" => false, "message" => $error);
+			newJson($data);
 			return;
 		}
 		
@@ -294,7 +298,8 @@ class Api extends MY_Controller{
 				
 		$this->muser->insert($insertdata);
 		
-		ShowJsonSuccess('Register berhasil');
+		$data = array("status" => true, "message" => "Registrasi Berhasil");
+		newJson($data);
 	}
 	
 	function _isValidNumber($hp){

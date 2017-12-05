@@ -1,6 +1,6 @@
 <?php
 class Encryption {
-    var $skey 	= "SuPerEncKey2010";
+    var $skey 	= "SuPerEncKey2010"."\0";
     //var $skey 	= "SuPerEncKey2010"."\0"; // you can change it
     //$skey = $skey."\0";
 
@@ -212,7 +212,9 @@ function IsAllowView($modul,$role=""){
 	// }
 // }
 
-
+function newJson($data){
+	echo json_encode($data);
+}
 
 function ShowJsonError($error){
 	echo json_encode(array('error'=>$error));

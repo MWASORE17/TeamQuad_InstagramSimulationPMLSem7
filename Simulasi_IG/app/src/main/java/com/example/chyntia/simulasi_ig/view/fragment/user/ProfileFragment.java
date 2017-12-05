@@ -6,6 +6,7 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -14,16 +15,29 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.example.chyntia.simulasi_ig.R;
 import com.example.chyntia.simulasi_ig.view.activity.MainActivity;
 import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.ProfileVPAdapter;
+import com.example.chyntia.simulasi_ig.view.model.entity.User;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
+import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
+import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.response.LoginResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.UserResponse;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.util.HashMap;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import static android.R.attr.data;
 
 /**
  * Created by Chyntia on 5/21/2017.
@@ -42,7 +56,7 @@ public class ProfileFragment extends Fragment {
     SessionManager session;
     LoginDBAdapter loginDBAdapter;
     String userName;
-
+    User user;
     public ProfileFragment() {
         // Required empty public constructor
     }
@@ -74,7 +88,7 @@ public class ProfileFragment extends Fragment {
         userName = user.get(SessionManager.KEY_USERNAME);
 
         profile_username = (TextView) view.findViewById(R.id.toolbar_title);
-        profile_username.setText(userName);
+
 
         ic_left = (ImageView) view.findViewById(R.id.icon_left);
         ic_left.setVisibility(View.GONE);
@@ -277,7 +291,41 @@ public class ProfileFragment extends Fragment {
     }
 
     private void updateProfPic(){
-        if(loginDBAdapter.checkProfPic(loginDBAdapter.getID(userName))!=null){
+        session = new SessionManager(getContext());
+        String token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
+
+        ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+        Call<UserResponse> call = apiRoute.getUserByToken(token);
+        call.enqueue(new Callback<UserResponse>() {
+            @Override
+            public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
+                UserResponse data = response.body();
+
+                if(data.isStatus()){
+                    user = data.getUser();
+                    profile_username.setText(user.getUserName());
+
+                    Picasso
+                            .with(getContext())
+                            .load(ApiRetrofit.URL + data.getUser().getImagePath())
+                            .resize(dpToPx(80), dpToPx(80))
+                            .centerCrop()
+                            .into(profile_pp);
+                }
+                else{
+                    Log.d("Error", data.getMessage());
+                    profile_pp.setImageResource(R.drawable.ic_account_circle_black_128dp);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UserResponse> call, Throwable t) {
+                Log.d("Error", t.getMessage());
+                profile_pp.setImageResource(R.drawable.ic_account_circle_black_128dp);
+            }
+        });
+
+       /* if(loginDBAdapter.checkProfPic(loginDBAdapter.getID(userName))!=null){
             Picasso
                     .with(getContext())
                     .load(new File(loginDBAdapter.getUserProfPic(loginDBAdapter.getID(userName))))
@@ -287,6 +335,6 @@ public class ProfileFragment extends Fragment {
                     .into(profile_pp);
         }
         else
-            profile_pp.setImageResource(R.drawable.ic_account_circle_black_128dp);
+            profile_pp.setImageResource(R.drawable.ic_account_circle_black_128dp);*/
     }
 }

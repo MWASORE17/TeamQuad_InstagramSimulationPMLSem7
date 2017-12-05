@@ -6,9 +6,21 @@ package com.example.chyntia.simulasi_ig.view.model.entity;
 
 public class User {
     private int id;
-    private String name;
-    private String email;
-    private String password;
+    private String UserName;
+    private String Name;
+    private String Email;
+    private String Password;
+    private String ImagePath;
+    private String Token;
+
+    public User(String userName, String name, String email, String password, String imagePath, String token) {
+        UserName = userName;
+        Name = name;
+        Email = email;
+        Password = password;
+        ImagePath = imagePath;
+        Token = token;
+    }
 
     public int getId() {
         return id;
@@ -19,26 +31,50 @@ public class User {
     }
 
     public String getName() {
-        return name;
+        return Name;
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.Name = name;
     }
 
     public String getEmail() {
-        return email;
+        return Email;
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        this.Email = email;
     }
 
     public String getPassword() {
-        return password;
+        return Password;
     }
 
     public void setPassword(String password) {
-        this.password = password;
+        this.Password = password;
+    }
+
+    public String getUserName() {
+        return UserName;
+    }
+
+    public void setUserName(String userName) {
+        UserName = userName;
+    }
+
+    public String getImagePath() {
+        return ImagePath;
+    }
+
+    public void setImagePath(String imagePath) {
+        ImagePath = imagePath;
+    }
+
+    public String getToken() {
+        return Token;
+    }
+
+    public void setToken(String token) {
+        Token = token;
     }
 }

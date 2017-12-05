@@ -55,5 +55,11 @@ dependencies {
     compile 'de.hdodenhof:circleimageview:2.1.0'
     compile 'com.nshmura:snappysmoothscroller:1.0.0'
     compile 'com.github.jd-alexander:LikeButton:0.2.1'
+
+    compile 'com.squareup.retrofit2:retrofit:2.3.0'
+    compile 'com.squareup.retrofit2:converter-gson:2.1.0'
+    compile 'com.squareup.okhttp3:okhttp:3.9.0'
+    compile 'com.squareup.okhttp3:logging-interceptor:3.9.0'
+
     testCompile 'junit:junit:4.12'
 }
