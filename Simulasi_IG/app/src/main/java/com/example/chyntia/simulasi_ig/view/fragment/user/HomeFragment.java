@@ -16,10 +16,18 @@ import com.example.chyntia.simulasi_ig.R;
 import com.example.chyntia.simulasi_ig.view.adapter.HomeRVAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
+import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
+import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.response.LoginResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.TimelineResponse;
 import com.nshmura.snappysmoothscroller.SnapType;
 import com.nshmura.snappysmoothscroller.SnappyLinearLayoutManager;
 
 import java.util.HashMap;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by Chyntia on 5/21/2017.
@@ -85,6 +93,24 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupRV(){
+        session = new SessionManager(getContext());
+        HashMap<String, String> user = session.getUserDetails();
+
+        ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+        Call<TimelineResponse> call = apiRoute.getTimelinePost(user.get(SessionManager.KEY_USERNAME));
+        call.enqueue(new Callback<TimelineResponse>() {
+            @Override
+            public void onResponse(Call<TimelineResponse> call, Response<TimelineResponse> response) {
+
+            }
+
+            @Override
+            public void onFailure(Call<TimelineResponse> call, Throwable t) {
+
+            }
+        });
+
+
 
         if(loginDBAdapter.check_TBPosting().equals("EMPTY")){
             changefragment(new HomeViewFragment(), "HomeView");

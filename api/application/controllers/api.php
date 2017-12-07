@@ -56,38 +56,71 @@ class Api extends MY_Controller{
 	function addPost(){
 		$token = $this->input->post('token');
 		if(empty($token)){
-			ShowJsonError('Token kosong');
+			$data = array("status" => false, "message" => "Token Kosong");
+			newJson($data);
 			return;
 		}
-		$username = $this->GetUserByToken($token);
-
+		$username = $this->db->where('Token',$token)->get('users')->row_array();
 		if(empty($username)){
-			ShowJsonError('Username tidak ditemukan');
+			$data = array("status" => false, "message" => "Username tidak ditemukan");
+			newJson($data);
 			return;
 		}
+
+		$image = $this->input->post('image');
+		$ImagePath = $username['UserName'] . mktime(). ".jpg";
+		file_put_contents("assets/images/uploaded/".$ImagePath, base64_decode($image));
 
 		$insertdata = array(
-			'UserName'=>$username,
-			'ImagePath'=>$this->input->post('ImagePath'),
+			'UserName'=>$username['UserName'],
+			'ImagePath'=> $ImagePath,
 			'Content'=>$this->input->post('Content') ? $this->input->post('Content') : null,
 			'Location'=>$this->input->post('Location') ? $this->input->post('Location') : null,
 			'CreatedOn'=> date('Y-m-d H:i:s'),
 		);
 		$this->db->insert('posts',$insertdata);
 	
-		ShowJsonSuccess('Berhasil simpan');
+		$data = array("status" => true, "message" => "Berhasil Post");
+		newJson($data);
 	}
 	
+	function getTimelinePost($token){
+		if(!$token){
+			$data = array("status" => false, "message" => "Empty");
+			newJson($data);
+			return;
+		}
+		$username = $this->db->where('Token',$token)->get('users')->row_array();
+		if(empty($username)){
+			$data = array("status" => false, "message" => "Empty");
+			newJson($data);
+			return;
+		}
+		
+		$query = $this->db->query(
+			"Select u.UserName, p.PostID, p.UserId, p.ImagePath, p.Content, p.Location, p.CreatedOn,
+			(SELECT COUNT(c.id) FROM comment c where c.post_id = p.PostID) as TotalComment,
+			(SELECT COUNT(l.id) FROM likes l where l.post_id = p.PostID) as TotalLikes
+			from 
+        users u inner join posts p on p.UserId = u.id 
+				where u.id = '". $username['id'] ."' or u.id in (Select a.follow_user_id from follow a where a.user_id = '". $username['id'] ."') ORDER BY p.CreatedOn DESC"
+			);
+
+		$data = array("status" => true, "message" => "get Timeline Success", "data" => $query->result());
+
+		newJson($data);
+	}
+
 	function getPostUser(){
 		$username = $this->input->get('username');
 		if(empty($username)){
-			ShowJsonError('UserName kosong');
+			$data = array("status" => false, "message" => "Username Kosong");
 			return;
 		}
 		$username = $this->GetUser($username);
 
 		if(empty($username)){
-			ShowJsonError('Username tidak ditemukan');
+			$data = array("status" => false, "message" => "Username tidak ditemukan");
 			return;
 		}
 		

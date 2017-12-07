@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -13,6 +14,7 @@ import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +29,11 @@ import com.example.chyntia.simulasi_ig.R;
 import com.example.chyntia.simulasi_ig.view.activity.MainActivity;
 import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
+import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
+import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.response.CResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.UserResponse;
+import com.example.chyntia.simulasi_ig.view.utilities.Encode;
 import com.squareup.picasso.Picasso;
 
 import org.ocpsoft.prettytime.PrettyTime;
@@ -34,6 +41,10 @@ import org.ocpsoft.prettytime.PrettyTime;
 import java.io.File;
 import java.util.Date;
 import java.util.HashMap;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by Chyntia on 6/2/2017.
@@ -127,13 +138,46 @@ public class ShareToFragment extends Fragment {
         ic_right.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                SessionManager session = new SessionManager(getContext());
+                String token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
+                ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+                Call<CResponse> call = apiRoute.addPost(token,
+                Encode.imageToString(
+                        ((BitmapDrawable) share_photo.getDrawable()).getBitmap()
+                ),
+                location.getText().toString(), caption.getText().toString());
+                call.enqueue(new Callback<CResponse>() {
+                    @Override
+                    public void onResponse(Call<CResponse> call, Response<CResponse> response) {
+                        CResponse data = response.body();
+                        if(data.isStatus()){
+                            ((MainActivity) getActivity()).changefragment(new HomeFragment(), "Home");
+                            ((MainActivity) getActivity()).show_bottom_nav_bar();
+
+                            Toast.makeText(getActivity(),
+                                    "Upload Successfully",
+                                    Toast.LENGTH_LONG).show();
+                        }
+                        else{
+                            Toast.makeText(getContext(), data.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<CResponse> call, Throwable t) {
+                        Log.d("Error", t.getMessage());
+                    }
+                });
+
                 //PrettyTime p = new PrettyTime();
-                loginDBAdapter.insert_Posting(loginDBAdapter.getID(userName),location.getText().toString(),photo_path,caption.getText().toString(),String.valueOf(System.currentTimeMillis()),0,0);
+                /*loginDBAdapter.insert_Posting(loginDBAdapter.getID(userName),location.getText().toString(),photo_path,caption.getText().toString(),String.valueOf(System.currentTimeMillis()),0,0);
                 myAsyncTask = new MyAsyncTask();
-                myAsyncTask.execute();
+                myAsyncTask.execute();*/
             }
         });
     }
+
+
 
     public static void hideKeyboard(Context ctx) {
         InputMethodManager inputManager = (InputMethodManager) ctx
