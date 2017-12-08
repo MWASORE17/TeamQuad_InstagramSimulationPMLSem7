@@ -216,12 +216,12 @@ function newJson($data){
 	echo json_encode($data);
 }
 
-function ShowJsonError($error){
-	echo json_encode(array('error'=>$error));
+function ShowJsonError($error,$data=""){
+	echo json_encode(array('status'=>false,'message'=>$error,'data'=>$data));
 }
 
-function ShowJsonSuccess($success){
-	echo json_encode(array('error'=>0,'success'=>$success));
+function ShowJsonSuccess($success,$data=""){
+	echo json_encode(array('status'=>true,'message'=>$success,'data'=>$data));
 }
 
 if(!function_exists('vEncode')){
