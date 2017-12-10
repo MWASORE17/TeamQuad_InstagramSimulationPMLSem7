@@ -77,7 +77,7 @@ class Api extends MY_Controller{
 		file_put_contents("assets/images/uploaded/".$ImagePath, base64_decode($image));
 
 		$insertdata = array(
-			'UserName'=>$username['UserName'],
+			'UserId'=>$username['id'],
 			'ImagePath'=> $ImagePath,
 			'Content'=>$this->input->post('Content') ? $this->input->post('Content') : null,
 			'Location'=>$this->input->post('Location') ? $this->input->post('Location') : null,
@@ -87,7 +87,7 @@ class Api extends MY_Controller{
 			ShowJsonSuccess("Berhasil Post");
 		}else{
 			ShowJsonError("Gagal Post");
-		}		
+		}
 	}
 
 	function getPostDetail(){
@@ -179,20 +179,44 @@ class Api extends MY_Controller{
 	}
 		
 	function GetComment(){
-		$postid = $this->input->get('postid');
-		$this->db->where(array(COL_ISVERIFIED=>1));
-		$this->db->where(COL_POSTID,$postid);
-		$this->db->order_by(COL_COMMENTTIME,'asc');
-		$comment = $this->db->get(TBL_COMMENTS);
+		$token = $this->input->post('token');
+		if(empty($token)){
+			ShowJsonError('Token kosong');
+			return;
+		}
+		$username = $this->GetUserByToken($token);
+		if(empty($username)){
+			ShowJsonError('Username tidak ditemukan');
+			return;
+		}
+
+		$id = $this->input->post('id');
+		if(empty($id)){
+			ShowJsonError('ID kosong');
+			return;
+		}
+		$this->db->where('PostID',$id);
+		$post = $this->db->get('posts');
+		
+		$count = $post->num_rows();
+
+		if(!$count){
+			ShowJsonError('Data tidak ditemukan');
+			return;
+		}
+
+		$this->db->where('post_id',$id);
+		$this->db->join('users','users.id = comment.user_id','LEFT');
+		$this->db->order_by('created_on','asc');
+		$comment = $this->db->get('comment');
 		
 		$data = array();
 		$i = 0;
 		foreach($comment->result_array() as $cmt){
 			$data[$i] = array(
-							COL_NAME => $cmt[COL_NAME],
-							COL_EMAIL => $cmt[COL_EMAIL],
-							COL_WEBSITE => $cmt[COL_WEBSITE],
-							COL_COMMENT => $cmt[COL_COMMENT]
+							'UserName' => $cmt['UserName'],
+							'Content' => $cmt['content'],
+							'Date' => $cmt['created_on']
 						);
 			$i++;
 		}
@@ -201,61 +225,46 @@ class Api extends MY_Controller{
 	}
 		
 	function InsertComment(){
-		$post = $this->input->get('post');
-		if(empty($post)){
-			ShowJsonError('Post ID kosong');
+		$token = $this->input->post('token');
+		if(empty($token)){
+			ShowJsonError('Token kosong');
 			return;
 		}
-        $captcha = $this->session->userdata('Captcha');
-        $usercaptcha = $this->input->post('captcha');
-        
-        if(isset($_POST['captcha'])){
-            if($captcha != $usercaptcha){
-				$res = array('error'=>'Kode captcha tidak tepat');
-				echo json_encode($res);
-				return;
-            }
-        }
+		$username = $this->GetUserByToken($token);
+		if(empty($username)){
+			ShowJsonError('Username tidak ditemukan');
+			return;
+		}
+
+		$id = $this->input->post('id');
+		if(empty($id)){
+			ShowJsonError('ID kosong');
+			return;
+		}
+		$this->db->where('PostID',$id);
+		$post = $this->db->get('posts');
+		
+		$count = $post->num_rows();
+
+		if(!$count){
+			ShowJsonError('Data tidak ditemukan');
+			return;
+		}
+
+		$userid = $this->db->where('Token',$token)->get('users')->row_array();
 		$data = array(
-					COL_POSTID=>$post,
-					COL_NAME=>$this->input->post('nama'),
-					COL_EMAIL=>$this->input->post('email'),
-					COL_WEBSITE=>$this->input->post('website'),
-					COL_COMMENTTIME=>date('Y-m-d H:i:s'),
-					COL_COMMENT=>$this->input->post('pesan'),
-					COL_ISVERIFIED=>0
+					'post_id'=>$id,
+					'user_id'=>$userid['id'],
+					'content'=>$this->input->post('content'),
+					'created_on'=>date('Y-m-d H:i:s')
 
 		);
 
-		$this->db->insert(TBL_COMMENTS,$data);
-
-		$berita = $this->db->where(COL_POSTID,$post)->get(TBL_POSTS)->row();
-
-		$this->load->model('mpost');
-		$rowpost = $this->mpost->GetAll(array('p.'.COL_POSTID=>$post))->row();
-		
-		#$this->load->library('email',$config);
-		$this->load->library('email',GetEmailConfig());
-		$this->email->set_newline("\r\n");
-		
-		$this->email->from(GetSetting('EmailSender'), GetSetting('EmailSenderName'));
-		$this->email->to(GetSetting('AdminEmail'));
-		if(CCEMAIL){
-			$this->email->cc(CCEMAIL);
+		if($this->db->insert('comment',$data)){
+			ShowJsonSuccess("Komentar Berhasil");	
+		}else{
+			ShowJsonError("Komentar Gagal");
 		}
-		//$this->email->cc('deka@somemail.com');
-		//$this->email->bcc('them@their-example.com');
-		
-		$message = "Email: ".$this->input->post('email')." <br />";
-		$message .= "Nama: ".$this->input->post('nama')." <br />";
-		$message .= "Post: Komentar pada ".$rowpost->PostTitle."<br />";
-		$message .= "Pesan: ".$this->input->post('pesan')."<br />";
-		$this->email->subject("Komentar pada ".$rowpost->PostTitle." | ".SITENAME);
-		$this->email->message($message);
-		$this->email->send();
-
-		$res = array('error'=>0,'message'=>'Email anda berhasil didaftarkan');
-		echo json_encode($res);
 	}
 	
 	function Getaccount(){
@@ -490,5 +499,116 @@ class Api extends MY_Controller{
 		$this->db->where('UserName',$username);
 		$this->db->update('users',$insertdata);
 		ShowJsonSuccess('Berhasil ubah password');
+	}
+
+	function postlike(){
+		$token = $this->input->post('token');
+		if(empty($token)){
+			ShowJsonError('Token kosong');
+			return;
+		}
+		$username = $this->GetUserByToken($token);
+		if(empty($username)){
+			ShowJsonError('Username tidak ditemukan');
+			return;
+		}
+
+		$id = $this->input->post('id');
+		if(empty($id)){
+			ShowJsonError('ID kosong');
+			return;
+		}
+		$this->db->where('PostID',$id);
+		$post = $this->db->get('posts');
+		
+		$count = $post->num_rows();
+
+		if(!$count){
+			ShowJsonError('Data tidak ditemukan');
+			return;
+		}
+
+		$userid = $this->db->where('Token',$token)->get('users')->row_array();
+
+		//$this->db->where('IsUnlike',1);
+		$this->db->where('user_id',$userid['id']);
+		$ceklike = $this->db->where('post_id',$id)->get('likes')->row_array();
+
+		if(!empty($ceklike)){
+			if($ceklike['IsUnlike']){
+				$data = array('IsUnlike' => 0);
+					
+				if($this->db->where('post_id',$id)->update('likes',$data)){
+					ShowJsonSuccess("Berhasil Like");
+					return;
+				}else{
+					ShowJsonError("Gagal Like");
+					return;
+				}
+			}
+		}
+
+		if(empty($ceklike)){
+			$data = array(
+				'post_id' => $id,
+				'user_id' => $userid['id'],
+				'created_on' => date('Y-m-d H:i:s')
+			);
+				
+			if($this->db->insert('likes',$data)){
+				ShowJsonSuccess("Berhasil Like");
+				return;
+			}else{
+				ShowJsonError("Gagal Like");
+				return;
+			}
+		}
+		ShowJsonSuccess("Berhasil Like");
+	}
+
+	function postunlike(){
+		$token = $this->input->post('token');
+		if(empty($token)){
+			ShowJsonError('Token kosong');
+			return;
+		}
+		$username = $this->GetUserByToken($token);
+		if(empty($username)){
+			ShowJsonError('Username tidak ditemukan');
+			return;
+		}
+
+		$id = $this->input->post('id');
+		if(empty($id)){
+			ShowJsonError('ID kosong');
+			return;
+		}
+		$this->db->where('PostID',$id);
+		$post = $this->db->get('posts');
+		
+		$count = $post->num_rows();
+
+		if(!$count){
+			ShowJsonError('Data tidak ditemukan');
+			return;
+		}
+
+		$userid = $this->db->where('Token',$token)->get('users')->row_array();
+		
+		$this->db->where('IsUnlike',0);
+		$this->db->where('user_id',$userid['id']);
+		$cekunlike = $this->db->where('post_id',$id)->get('likes')->row_array();
+
+		$data = array('IsUnlike' => 1);
+					
+		if(!empty($cekunlike)){
+			$this->db->where('user_id',$userid['id']);
+			$this->db->where('post_id',$id)->update('likes',$data);
+			ShowJsonSuccess("Berhasil UnLike");
+			return;
+		}else{
+			ShowJsonError("Gagal UnLike");
+			return;
+		}
 	}
 }
