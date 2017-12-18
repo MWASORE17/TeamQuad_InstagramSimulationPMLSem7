@@ -6,6 +6,7 @@ import android.media.CamcorderProfile;
  * Created by Chyntia on 5/28/2017.
  */
 
+//TIMELINE
 public class Data_TL {
     public String nama, img_path, caption, location, profPic;
     public int comment, like, _id;

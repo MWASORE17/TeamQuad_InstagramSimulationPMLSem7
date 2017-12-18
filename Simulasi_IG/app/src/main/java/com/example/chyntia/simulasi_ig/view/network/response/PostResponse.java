@@ -4,7 +4,7 @@ package com.example.chyntia.simulasi_ig.view.network.response;
  * Created by Vinixz on 12/6/2017.
  */
 
-public class TimelineResponse {
+public class PostResponse extends CResponse {
 
     private String UserName;
     private int PostID;
@@ -16,7 +16,8 @@ public class TimelineResponse {
     private int TotalComment;
     private int TotalLikes;
 
-    public TimelineResponse(String userName, int postID, int userId, String imagePath, String content, String location, String createdOn, int totalComment, int totalLikes) {
+    public PostResponse(String message, boolean status, String userName, int postID, int userId, String imagePath, String content, String location, String createdOn, int totalComment, int totalLikes) {
+        super(message, status);
         UserName = userName;
         PostID = postID;
         UserId = userId;

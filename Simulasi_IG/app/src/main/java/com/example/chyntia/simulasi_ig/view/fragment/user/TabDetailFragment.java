@@ -88,22 +88,14 @@ public class TabDetailFragment extends Fragment {
         }
 
         else{
-            HomeRVAdapter adapter = new HomeRVAdapter(loginDBAdapter.getPostingProfileDetail(loginDBAdapter.getID(userName)), getActivity().getApplication());
+         /*   HomeRVAdapter adapter = new HomeRVAdapter(loginDBAdapter.getPostingProfileDetail(loginDBAdapter.getID(userName)), getActivity().getApplication());
             rv.setAdapter(adapter);
             //rv.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
             SnappyLinearLayoutManager layoutManager = new SnappyLinearLayoutManager(getActivity().getApplicationContext());
             layoutManager.setSnapType(SnapType.CENTER);
             layoutManager.setSnapInterpolator(new DecelerateInterpolator());
             rv.setLayoutManager(layoutManager);
-            rv.smoothScrollToPosition(0);
+            rv.smoothScrollToPosition(0);*/
         }
     }
-/*
-    public List<Data_TL> fill_with_data() {
-
-        List<Data_TL> data = new ArrayList<>();
-
-        data.add(new Data_TL(0,R.drawable.ic_account_circle_black_24dp, "katelouis", R.drawable.ic_comment_outline_grey, R.drawable.ic_heart_outline_grey));
-        return data;
-    }*/
 }

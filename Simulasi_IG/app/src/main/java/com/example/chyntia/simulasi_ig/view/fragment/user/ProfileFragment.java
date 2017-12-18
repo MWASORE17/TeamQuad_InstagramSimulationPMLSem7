@@ -295,7 +295,7 @@ public class ProfileFragment extends Fragment {
         String token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
 
         ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
-        Call<UserResponse> call = apiRoute.getUserByToken(token);
+        Call<UserResponse> call = apiRoute.getUserAccount(token);
         call.enqueue(new Callback<UserResponse>() {
             @Override
             public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
