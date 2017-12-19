@@ -4,13 +4,13 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.chyntia.simulasi_ig.R;
 import com.example.chyntia.simulasi_ig.view.adapter.HomeRVAdapter;
@@ -18,8 +18,8 @@ import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
 import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
 import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
-import com.example.chyntia.simulasi_ig.view.network.response.LoginResponse;
-import com.example.chyntia.simulasi_ig.view.network.response.TimelineResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.FeedResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.PostResponse;
 import com.nshmura.snappysmoothscroller.SnapType;
 import com.nshmura.snappysmoothscroller.SnappyLinearLayoutManager;
 
@@ -97,36 +97,38 @@ public class HomeFragment extends Fragment {
         HashMap<String, String> user = session.getUserDetails();
 
         ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
-        Call<TimelineResponse> call = apiRoute.getTimelinePost(user.get(SessionManager.KEY_USERNAME));
-        call.enqueue(new Callback<TimelineResponse>() {
+        Call<FeedResponse> call = apiRoute.getTimelinePost(user.get(SessionManager.KEY_USERNAME));
+        call.enqueue(new Callback<FeedResponse>() {
             @Override
-            public void onResponse(Call<TimelineResponse> call, Response<TimelineResponse> response) {
+            public void onResponse(Call<FeedResponse> call, Response<FeedResponse> response) {
+                FeedResponse data = response.body();
 
+                if(data.isStatus()){
+                    if(data.getFeeds().size() > 0){
+                        HomeRVAdapter adapter = new HomeRVAdapter(data.getFeeds(), getActivity().getApplication());
+                        rv.setAdapter(adapter);
+                        //rv.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
+                        SnappyLinearLayoutManager layoutManager = new SnappyLinearLayoutManager(getActivity().getApplicationContext());
+                        layoutManager.setSnapType(SnapType.CENTER);
+                        layoutManager.setSnapInterpolator(new DecelerateInterpolator());
+                        rv.setLayoutManager(layoutManager);
+                        rv.smoothScrollToPosition(0);
+                    }
+                    else{
+                        changefragment(new HomeViewFragment(), "HomeView");
+                        rv.setVisibility(View.GONE);
+                    }
+                }
+                else{
+                    Toast.makeText(getContext(), "Could not refresh feed !", Toast.LENGTH_LONG).show();
+                }
             }
 
             @Override
-            public void onFailure(Call<TimelineResponse> call, Throwable t) {
-
+            public void onFailure(Call<FeedResponse> call, Throwable t) {
+                Toast.makeText(getContext(), "Could not refresh feed !", Toast.LENGTH_LONG).show();
             }
         });
-
-
-
-        if(loginDBAdapter.check_TBPosting().equals("EMPTY")){
-            changefragment(new HomeViewFragment(), "HomeView");
-            rv.setVisibility(View.GONE);
-        }
-
-        else{
-            HomeRVAdapter adapter = new HomeRVAdapter(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)), getActivity().getApplication());
-            rv.setAdapter(adapter);
-            //rv.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
-            SnappyLinearLayoutManager layoutManager = new SnappyLinearLayoutManager(getActivity().getApplicationContext());
-            layoutManager.setSnapType(SnapType.CENTER);
-            layoutManager.setSnapInterpolator(new DecelerateInterpolator());
-            rv.setLayoutManager(layoutManager);
-            rv.smoothScrollToPosition(0);
-        }
     }
 
     public void changefragment(Fragment fragment, String tag) {

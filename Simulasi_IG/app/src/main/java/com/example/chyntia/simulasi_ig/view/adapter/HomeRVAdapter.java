@@ -1,8 +1,8 @@
 package com.example.chyntia.simulasi_ig.view.adapter;
 
 import android.content.Context;
-import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,27 +10,35 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.chyntia.simulasi_ig.R;
-import com.example.chyntia.simulasi_ig.view.activity.MainActivity;
-import com.example.chyntia.simulasi_ig.view.fragment.user.UserCommentFragment;
 import com.example.chyntia.simulasi_ig.view.model.entity.Data_TL;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
+import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
+import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.response.CResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.LoginResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.PostResponse;
+import com.example.chyntia.simulasi_ig.view.utilities.DatetimeUtils;
 import com.like.LikeButton;
 import com.like.OnLikeListener;
 import com.squareup.picasso.Picasso;
 
-import java.io.File;
-import java.util.Collections;
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by Chyntia on 5/24/2017.
  */
 
 public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    List<Data_TL> user = Collections.emptyList();
+    ArrayList<PostResponse> user;
     Context context;
     private boolean isButtonClicked = false;
+
     LoginDBAdapter loginDBAdapter;
     String userName;
     SessionManager session;
@@ -41,7 +49,9 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     private static final int HOUR_MILLIS = 60 * MINUTE_MILLIS;
     private static final int DAY_MILLIS = 24 * HOUR_MILLIS;
 
-    public HomeRVAdapter(List<Data_TL> user, Context context) {
+    public HomeRVAdapter(ArrayList<PostResponse> user, Context context) {
+        session = new SessionManager(context);
+
         this.user = user;
         this.context = context;
     }
@@ -51,54 +61,47 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         //Inflate the layout, initialize the View Holder
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.custom_row_timeline, parent, false);
 
-        loginDBAdapter = new LoginDBAdapter(context);
-        loginDBAdapter = loginDBAdapter.open();
-
-        session = new SessionManager(context);
-        HashMap<String, String> user = session.getUserDetails();
-
-        // name
-        userName = user.get(SessionManager.KEY_USERNAME);
+        /*loginDBAdapter = new LoginDBAdapter(context);
+        loginDBAdapter = loginDBAdapter.open();*/
 
         return new HomeRVAdapter.ViewHolder(v);
     }
 
     @Override
-    public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
+        final String token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
         final HomeRVAdapter.ViewHolder _holder = (HomeRVAdapter.ViewHolder) holder;
-        final Data_TL _user = this.user.get(position);
+        final PostResponse _user = this.user.get(position);
         //Use the provided View Holder on the onCreateViewHolder method to populate the current row on the RecyclerView
-        _holder.nama.setText(_user.nama);
+        _holder.nama.setText(_user.getUserName());
 
-        if(_user.nama.equals("airasia"))
+        if (_user.getUserName().equals("airasia"))
             _holder.title_advertisement.setVisibility(View.VISIBLE);
 
-        if(loginDBAdapter.checkProfPic(loginDBAdapter.getID(_user.nama))!=null){
+        if (_user.getImagePath() == "" || _user.getImagePath() == null) {
             Picasso
                     .with(context)
-                    .load(new File(_user.profPic))
+                    .load(ApiRetrofit.URL + _user.getImagePath())
                     .resize(dpToPx(20), dpToPx(20))
                     .centerCrop()
                     .error(R.drawable.ic_account_circle_black_24dp)
                     .into(_holder.pp);
-        }
-        else
+        } else
             _holder.pp.setImageResource(R.drawable.ic_account_circle_black_24dp);
 
-        //animate(holder);
-        _holder.comment.setOnClickListener(new View.OnClickListener(){
+        _holder.comment.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int position = loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition();
+               /* int position = loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition();
                 UserCommentFragment ucf = new UserCommentFragment();
                 final Bundle args = new Bundle();
                 args.putInt("POSITION", position);
                 ucf.setArguments(args);
-                ((MainActivity) v.getContext()).changefragment(ucf, "UserComment");
+                ((MainActivity) v.getContext()).changefragment(ucf, "UserComment");*/
             }
         });
 
-        if(loginDBAdapter.check_TBComments().equals("NOT EMPTY")) {
+     /*   if(loginDBAdapter.check_TBComments().equals("NOT EMPTY")) {
             _holder.view_comment.setVisibility(View.VISIBLE);
             if(loginDBAdapter.getAllComments(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).size() == 0){
                 _holder.view_comment.setVisibility(View.GONE);
@@ -132,25 +135,10 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                     }
                 });
             }
-        }
-
-        /*
-        if(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()) == 0) {
-            _holder.count_likes.setVisibility(View.GONE);
-        }
-
-        else {
-            _holder.count_likes.setVisibility(View.VISIBLE);
-            if(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()) == 1) {
-                _holder.count_likes.setText(String.valueOf(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()))+" like");
-            }
-
-            else{
-                _holder.count_likes.setText(String.valueOf(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()))+" likes");
-            }
         }*/
 
-        if(loginDBAdapter.isLike(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition(),loginDBAdapter.getID(userName))) {
+        /** Like Post*/
+        /*if(loginDBAdapter.isLike(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition(),loginDBAdapter.getID(userName))) {
             _holder.like.setLiked(true);
             _holder.like.setLikeDrawableRes(R.drawable.ic_heart_red);
         }
@@ -158,19 +146,18 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         else {
             _holder.like.setLiked(false);
             _holder.like.setUnlikeDrawableRes(R.drawable.ic_heart_outline_grey);
-        }
+        }*/
 
-        if(loginDBAdapter.check_TBLikes().equals("NOT EMPTY")){
+        if (user.get(position).getTotalLikes() > 0) {
             _holder.count_likes.setVisibility(View.VISIBLE);
 
-            if(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).size()==0)
-                _holder.count_likes.setVisibility(View.GONE);
-
-            else if(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).size()==1)
-                _holder.count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).size())+" like");
+            if (user.get(position).getTotalLikes() == 1)
+                _holder.count_likes.setText(user.get(position).getTotalLikes() + " like");
 
             else
-                _holder.count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).size())+" likes");
+                _holder.count_likes.setText(user.get(position).getTotalLikes() + " likes");
+        } else {
+            _holder.count_likes.setVisibility(View.GONE);
         }
 
         _holder.like.setOnLikeListener(new OnLikeListener() {
@@ -178,136 +165,98 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             public void liked(LikeButton likeButton) {
                 _holder.count_likes.setVisibility(View.VISIBLE);
 
-                loginDBAdapter.insert_Likes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition(),loginDBAdapter.getID(userName),loginDBAdapter.getUserProfPic(loginDBAdapter.getID(userName)),String.valueOf(System.currentTimeMillis()));
-                loginDBAdapter.insert_Notif(loginDBAdapter.getUserProfPic(loginDBAdapter.getID(userName)),loginDBAdapter.getID(userName),"Like",String.valueOf(System.currentTimeMillis()),loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition(),0);
+                /** Insert Like*/
+                ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+                Call<CResponse> call = apiRoute.postLike(token, user.get(position).getPostID());
+                call.enqueue(new Callback<CResponse>() {
+                    @Override
+                    public void onResponse(Call<CResponse> call, Response<CResponse> response) {
+                        CResponse data = response.body();
 
-                if(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).size()==0)
+                        if(data.isStatus()){
+                            Log.i("Success IG", data.getMessage());
+                        }
+                        else{
+                            Log.e("Failed IG", data.getMessage());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<CResponse> call, Throwable t) {
+                        Log.d("Failed IG", t.getMessage());
+                    }
+                });
+
+                /** Insert Notif*/
+
+
+
+                if (loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition()).size() == 0)
                     _holder.count_likes.setVisibility(View.GONE);
 
-                else if(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).size()==1)
-                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).size())+" like");
+                else if (loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition()).size() == 1)
+                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition()).size()) + " like");
 
                 else
-                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).size())+" likes");
+                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition()).size()) + " likes");
 
-                /*
-                loginDBAdapter.updateUserLikes(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition())+1,loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition());
-                if(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()) == 1) {
-                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()))+" like");
-                }
-
-                else{
-                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()))+" likes");
-                }*/
             }
 
             @Override
             public void unLiked(LikeButton likeButton) {
                 _holder.count_likes.setVisibility(View.VISIBLE);
 
-                loginDBAdapter.delete_Likes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition(),loginDBAdapter.getID(userName));
+                loginDBAdapter.delete_Likes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition(), loginDBAdapter.getID(userName));
 
-                if(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).size()==0)
+                if (loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition()).size() == 0)
                     _holder.count_likes.setVisibility(View.GONE);
 
-                else if(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).size()==1)
-                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).size())+" like");
+                else if (loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition()).size() == 1)
+                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition()).size()) + " like");
 
                 else
-                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).size())+" likes");
-                /*
-                loginDBAdapter.updateUserLikes(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition())-1,loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition());
-                if(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()) == 1) {
-                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()))+" like");
-                }
+                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition()).size()) + " likes");
 
-                else{
-                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()))+" likes");
-                }*/
             }
         });
-/*
-        _holder.like.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-                //if (v.getId() == R.id.icon_like) {
-                    //isButtonClicked = !isButtonClicked;
-                    // toggle the boolean flag
-                    //_holder.like.setImageResource(isButtonClicked ? R.drawable.ic_heart_red : R.drawable.ic_heart_outline_grey);
-                    curr_state = !isLike;
 
-                    _holder.count_likes.setVisibility(View.VISIBLE);
-
-                    if(curr_state)
-                    {
-                        loginDBAdapter.updateUserLikes(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition())+1,loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition());
-
-                        _holder.like.setImageResource(R.drawable.ic_heart_red);
-
-                        if(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()) == 1) {
-                            _holder.count_likes.setText(String.valueOf(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()))+" like");
-                        }
-
-                        else{
-                            _holder.count_likes.setText(String.valueOf(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()))+" likes");
-                        }
-
-                        curr_state = isLike;
-
-                    }
-                    else if(!curr_state)
-                    {
-                        loginDBAdapter.updateUserLikes(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition())-1,loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition());
-
-                        _holder.like.setImageResource(R.drawable.ic_heart_outline_grey);
-
-                        if(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()) == 1) {
-                            _holder.count_likes.setText(String.valueOf(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()))+" like");
-                        }
-
-                        else{
-                            _holder.count_likes.setText(String.valueOf(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()))+" likes");
-                        }
-
-                        curr_state = !isLike;
-                    }
-                //}
-            }
-        });*/
 
         Picasso
                 .with(context)
-                .load(new File(_user.img_path))
+                .load(ApiRetrofit.URL + _user.getImagePath())
                 .resize(dpToPx(300), dpToPx(300))
                 .centerCrop()
                 .error(R.drawable.ic_account_circle_black_128dp)
                 .into(_holder.photo);
 
-        if(loginDBAdapter.checkCaption(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).equals(""))
+      /*  if(loginDBAdapter.checkCaption(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).equals(""))
             _holder.username_caption.setVisibility(View.GONE);
 
         else {
             _holder.username_caption.setVisibility(View.VISIBLE);
-            _holder.username_caption.setText(_user.nama);
+            _holder.username_caption.setText(_user.getUserName());
             _holder.caption.setVisibility(View.VISIBLE);
-            _holder.caption.setText(_user.caption);
-        }
+            _holder.caption.setText(_user.getContent());
+        }*/
 
-        if(loginDBAdapter.checkLocation(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).equals(""))
+     /*   if(loginDBAdapter.checkLocation(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).equals(""))
             _holder.user_location.setVisibility(View.GONE);
 
         else {
             _holder.user_location.setVisibility(View.VISIBLE);
-            _holder.user_location.setText(_user.location);
-        }
+            _holder.user_location.setText(_user.getLocation());
+        }*/
 
-        _holder.time.setText(getTimeAgo(Long.parseLong(loginDBAdapter.getPostingTime(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()))));
+        try {
+            _holder.time.setText(getTimeAgo(DatetimeUtils.stringToDate(_user.getCreatedOn()).getTime()));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
     }
 
-    private int dpToPx(int dp)
-    {
+    private int dpToPx(int dp) {
         float density = context.getResources().getDisplayMetrics().density;
-        return Math.round((float)dp * density);
+        return Math.round((float) dp * density);
     }
 
     @Override
@@ -322,7 +271,7 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     }
 
     // Insert a new item to the RecyclerView on a predefined position
-    public void insert(int position, Data_TL data) {
+    public void insert(int position, PostResponse data) {
         user.add(position, data);
         notifyItemInserted(position);
     }
@@ -337,7 +286,7 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         TextView nama, title_advertisement, time, username_caption, count_likes, caption, user_location, view_comment;
-        ImageView pp,comment,photo;
+        ImageView pp, comment, photo;
         LikeButton like;
 
         public ViewHolder(View itemView) {

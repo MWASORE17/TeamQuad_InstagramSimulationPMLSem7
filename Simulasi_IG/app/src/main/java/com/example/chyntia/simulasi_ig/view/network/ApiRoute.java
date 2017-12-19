@@ -1,22 +1,16 @@
 package com.example.chyntia.simulasi_ig.view.network;
 
-import com.example.chyntia.simulasi_ig.view.model.entity.User;
 import com.example.chyntia.simulasi_ig.view.network.response.CResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.FeedResponse;
 import com.example.chyntia.simulasi_ig.view.network.response.LoginResponse;
-import com.example.chyntia.simulasi_ig.view.network.response.TimelineResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.PostResponse;
 import com.example.chyntia.simulasi_ig.view.network.response.UserResponse;
-import com.google.gson.JsonObject;
-
-import java.sql.Time;
 
 import retrofit2.Call;
-import retrofit2.http.Body;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
-import retrofit2.http.Headers;
 import retrofit2.http.POST;
-import retrofit2.http.PUT;
 import retrofit2.http.Path;
 
 /**
@@ -25,11 +19,9 @@ import retrofit2.http.Path;
 
 public interface ApiRoute {
 
-    @GET("GetUserByToken/{Token}")
-    Call<UserResponse> getUserByToken(@Path("Token") String token);
-
-    @GET("GetUserByToken/{Token}")
-    Call<UserResponse> getUserData(@Path("Token") String token);
+    @FormUrlEncoded
+    @POST("Getaccount")
+    Call<UserResponse> getUserAccount(@Field("token") String token);
 
     @FormUrlEncoded
     @POST("addPost")
@@ -40,11 +32,12 @@ public interface ApiRoute {
             @Field("Content") String content
     );
 
-    @GET("getTimelinePost/{Token}")
-    Call<TimelineResponse> getTimelinePost(@Path("Token") String token);
+    @GET("getFeeds/{Token}")
+    Call<FeedResponse> getTimelinePost(@Path("Token") String token);
 
-    @GET("getUserPost")
-    Call<CResponse> getUserPost();
+    @FormUrlEncoded
+    @POST("postlike")
+    Call<CResponse> postLike(@Field("token") String token, @Field("id") int postID);
 
    /* @GET("")
     Call<PostResponse> getUserPosts();

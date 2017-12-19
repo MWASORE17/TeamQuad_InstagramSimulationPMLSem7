@@ -120,7 +120,7 @@ class Api extends MY_Controller{
 		echo json_encode($data);
 	}
 	
-	function getTimelinePost($token){
+	function getFeeds($token){
 		if(!$token){
 			ShowJsonError("Token Kosong");
 			return;
@@ -288,7 +288,7 @@ class Api extends MY_Controller{
 			'ImagePath' => $a['ImagePath'],
 		);
 		
-		echo json_encode($res);
+		ShowJsonSuccess("Get Profile Success", $res);
 	}
 
 	function CheckLogin(){
