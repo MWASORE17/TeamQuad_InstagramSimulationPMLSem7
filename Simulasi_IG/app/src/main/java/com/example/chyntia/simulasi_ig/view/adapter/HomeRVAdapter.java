@@ -137,7 +137,7 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             }
         }*/
 
-        /** Like Post*/
+        /** User Like Post*/
         /*if(loginDBAdapter.isLike(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition(),loginDBAdapter.getID(userName))) {
             _holder.like.setLiked(true);
             _holder.like.setLikeDrawableRes(R.drawable.ic_heart_red);
@@ -148,6 +148,7 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             _holder.like.setUnlikeDrawableRes(R.drawable.ic_heart_outline_grey);
         }*/
 
+        /** Count Like Post*/
         if (user.get(position).getTotalLikes() > 0) {
             _holder.count_likes.setVisibility(View.VISIBLE);
 

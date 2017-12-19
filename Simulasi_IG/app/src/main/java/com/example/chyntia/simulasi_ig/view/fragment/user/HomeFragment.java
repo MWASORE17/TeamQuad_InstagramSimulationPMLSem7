@@ -120,13 +120,13 @@ public class HomeFragment extends Fragment {
                     }
                 }
                 else{
-                    Toast.makeText(getContext(), "Could not refresh feed !", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "Could not refresh feed !" + data.getMessage(), Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
             public void onFailure(Call<FeedResponse> call, Throwable t) {
-                Toast.makeText(getContext(), "Could not refresh feed !", Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), "Could not refresh feed !" + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }

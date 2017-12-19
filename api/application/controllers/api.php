@@ -132,11 +132,11 @@ class Api extends MY_Controller{
 		}
 		
 		$query = $this->db->query(
-			"Select u.UserName, p.PostID, p.UserId, p.ImagePath, p.Content, p.Location, p.CreatedOn,
+			"Select l.IsUnlike, u.UserName, p.PostID, p.UserId, p.ImagePath, p.Content, p.Location, p.CreatedOn,
 			(SELECT COUNT(c.id) FROM comment c where c.post_id = p.PostID) as TotalComment,
 			(SELECT COUNT(l.id) FROM likes l where l.post_id = p.PostID) as TotalLikes
 			from 
-        users u inner join posts p on p.UserId = u.id 
+        users u inner join posts p on p.UserId = u.id left join likes l on l.post_id = p.PostID
 				where u.id = '". $username['id'] ."' or u.id in (Select a.follow_user_id from follow a where a.user_id = '". $username['id'] ."') ORDER BY p.CreatedOn DESC"
 			);
 
