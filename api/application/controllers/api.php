@@ -611,4 +611,74 @@ class Api extends MY_Controller{
 			return;
 		}
 	}
+
+	function follow(){
+		$token = $this->input->post('token');
+		if(empty($token)){
+			ShowJsonError('Token kosong');
+			return;
+		}
+		$username = $this->GetUserByToken($token);
+		if(empty($username)){
+			ShowJsonError('Username tidak ditemukan');
+			return;
+		}
+
+		$tousername = $this->input->post('tousername');
+		if(empty($tousername)){
+			ShowJsonError('UserName kosong');
+			return;
+		}
+		
+		$cekusername = $this->GetUser($tousername);
+		if(empty($cekusername)){
+			ShowJsonError('Tidak ada user yang di follow');
+			return;
+		}
+
+		$data = array(
+			'user_id' => $username,
+			'fllow_user_id' => $tousername,
+			'created_on' => date('Y-m-d H:i:s')
+		);
+			
+		if($this->db->insert('follow',$data)){
+			ShowJsonSuccess("Berhasil Follow");
+			return;
+		}else{
+			ShowJsonError("Gagal Follow");
+			return;
+		}
+	}
+
+	function unfollow(){
+		$token = $this->input->post('token');
+		if(empty($token)){
+			ShowJsonError('Token kosong');
+			return;
+		}
+		$username = $this->GetUserByToken($token);
+		if(empty($username)){
+			ShowJsonError('Username tidak ditemukan');
+			return;
+		}
+
+		$tousername = $this->input->post('tousername');
+		if(empty($tousername)){
+			ShowJsonError('UserName kosong');
+			return;
+		}
+		
+		$cekusername = $this->GetUser($tousername);
+		if(empty($cekusername)){
+			ShowJsonError('Tidak ada user yang di follow');
+			return;
+		}
+
+		$this->db->where('user_id', $username);	
+		$this->db->where('follow_user_id', $tousername);	
+		$this->db->delete('follow');
+
+		ShowJsonSuccess("Berhasil Unfollow");
+	}
 }
