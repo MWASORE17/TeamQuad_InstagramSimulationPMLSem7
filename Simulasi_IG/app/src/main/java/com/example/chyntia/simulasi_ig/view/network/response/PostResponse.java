@@ -15,6 +15,7 @@ public class PostResponse extends CResponse {
     private String CreatedOn;
     private int TotalComment;
     private int TotalLikes;
+    private int IsUnlike;
 
     public PostResponse(String message, boolean status, String userName, int postID, int userId, String imagePath, String content, String location, String createdOn, int totalComment, int totalLikes) {
         super(message, status);
@@ -99,5 +100,13 @@ public class PostResponse extends CResponse {
 
     public void setTotalLikes(int totalLikes) {
         TotalLikes = totalLikes;
+    }
+
+    public int getIsUnlike() {
+        return IsUnlike;
+    }
+
+    public void setIsUnlike(int isUnlike) {
+        IsUnlike = isUnlike;
     }
 }

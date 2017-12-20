@@ -39,6 +39,10 @@ public interface ApiRoute {
     @POST("postlike")
     Call<CResponse> postLike(@Field("token") String token, @Field("id") int postID);
 
+    @FormUrlEncoded
+    @POST("postunlike")
+    Call<CResponse> postUnLike(@Field("token") String token, @Field("id") int postID);
+
    /* @GET("")
     Call<PostResponse> getUserPosts();
 

@@ -71,17 +71,17 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
         final String token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
         final HomeRVAdapter.ViewHolder _holder = (HomeRVAdapter.ViewHolder) holder;
-        final PostResponse _user = this.user.get(position);
+        final PostResponse _post = this.user.get(position);
         //Use the provided View Holder on the onCreateViewHolder method to populate the current row on the RecyclerView
-        _holder.nama.setText(_user.getUserName());
+        _holder.nama.setText(_post.getUserName());
 
-        if (_user.getUserName().equals("airasia"))
+        if (_post.getUserName().equals("airasia"))
             _holder.title_advertisement.setVisibility(View.VISIBLE);
 
-        if (_user.getImagePath() == "" || _user.getImagePath() == null) {
+        if (_post.getImagePath() == "" || _post.getImagePath() == null) {
             Picasso
                     .with(context)
-                    .load(ApiRetrofit.URL + _user.getImagePath())
+                    .load(ApiRetrofit.URL + _post.getImagePath())
                     .resize(dpToPx(20), dpToPx(20))
                     .centerCrop()
                     .error(R.drawable.ic_account_circle_black_24dp)
@@ -137,16 +137,15 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             }
         }*/
 
-        /** User Like Post*/
-        /*if(loginDBAdapter.isLike(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition(),loginDBAdapter.getID(userName))) {
+        /** User Liked Post*/
+        if(user.get(position).getIsUnlike() == 0) {
             _holder.like.setLiked(true);
             _holder.like.setLikeDrawableRes(R.drawable.ic_heart_red);
         }
-
         else {
             _holder.like.setLiked(false);
             _holder.like.setUnlikeDrawableRes(R.drawable.ic_heart_outline_grey);
-        }*/
+        }
 
         /** Count Like Post*/
         if (user.get(position).getTotalLikes() > 0) {
@@ -161,6 +160,7 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             _holder.count_likes.setVisibility(View.GONE);
         }
 
+        /** Like or UnLike Post*/
         _holder.like.setOnLikeListener(new OnLikeListener() {
             @Override
             public void liked(LikeButton likeButton) {
@@ -190,16 +190,16 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
                 /** Insert Notif*/
 
-
-
-                if (loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition()).size() == 0)
+                user.get(position).setTotalLikes(user.get(position).getTotalLikes()+ 1);
+                int totalLikes = user.get(position).getTotalLikes();
+                if (totalLikes == 0)
                     _holder.count_likes.setVisibility(View.GONE);
 
-                else if (loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition()).size() == 1)
-                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition()).size()) + " like");
+                else if (totalLikes == 1)
+                    _holder.count_likes.setText(1 + " like");
 
                 else
-                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition()).size()) + " likes");
+                    _holder.count_likes.setText(totalLikes + " likes");
 
             }
 
@@ -207,49 +207,72 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             public void unLiked(LikeButton likeButton) {
                 _holder.count_likes.setVisibility(View.VISIBLE);
 
-                loginDBAdapter.delete_Likes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition(), loginDBAdapter.getID(userName));
+                /** UnLike*/
+                ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+                Call<CResponse> call = apiRoute.postUnLike(token, user.get(position).getPostID());
+                call.enqueue(new Callback<CResponse>() {
+                    @Override
+                    public void onResponse(Call<CResponse> call, Response<CResponse> response) {
+                        CResponse data = response.body();
 
-                if (loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition()).size() == 0)
+                        if(data.isStatus()){
+                            Log.i("Success IG", data.getMessage());
+                        }
+                        else{
+                            Log.e("Failed IG", data.getMessage());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<CResponse> call, Throwable t) {
+                        Log.d("Failed IG", t.getMessage());
+                    }
+                });
+
+                user.get(position).setTotalLikes(user.get(position).getTotalLikes()-1);
+                int totalLikes = user.get(position).getTotalLikes();
+                if (totalLikes == 0)
                     _holder.count_likes.setVisibility(View.GONE);
 
-                else if (loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition()).size() == 1)
-                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition()).size()) + " like");
+                else if (totalLikes == 1)
+                    _holder.count_likes.setText(1 + " like");
 
                 else
-                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition()).size()) + " likes");
+                    _holder.count_likes.setText(totalLikes + " likes");
 
             }
         });
 
-
         Picasso
                 .with(context)
-                .load(ApiRetrofit.URL + _user.getImagePath())
+                .load(ApiRetrofit.URL + _post.getImagePath())
                 .resize(dpToPx(300), dpToPx(300))
                 .centerCrop()
                 .error(R.drawable.ic_account_circle_black_128dp)
                 .into(_holder.photo);
 
-      /*  if(loginDBAdapter.checkCaption(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).equals(""))
+        /** Caption or Content */
+        if(_post.getContent() == "")
             _holder.username_caption.setVisibility(View.GONE);
 
         else {
             _holder.username_caption.setVisibility(View.VISIBLE);
-            _holder.username_caption.setText(_user.getUserName());
+            _holder.username_caption.setText(_post.getUserName());
             _holder.caption.setVisibility(View.VISIBLE);
-            _holder.caption.setText(_user.getContent());
-        }*/
+            _holder.caption.setText(_post.getContent());
+        }
 
-     /*   if(loginDBAdapter.checkLocation(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).equals(""))
+        /** Location */
+        if(_post.getLocation() == "")
             _holder.user_location.setVisibility(View.GONE);
 
         else {
             _holder.user_location.setVisibility(View.VISIBLE);
-            _holder.user_location.setText(_user.getLocation());
-        }*/
+            _holder.user_location.setText(_post.getLocation());
+        }
 
         try {
-            _holder.time.setText(getTimeAgo(DatetimeUtils.stringToDate(_user.getCreatedOn()).getTime()));
+            _holder.time.setText(getTimeAgo(DatetimeUtils.stringToDate(_post.getCreatedOn()).getTime()));
         } catch (ParseException e) {
             e.printStackTrace();
         }

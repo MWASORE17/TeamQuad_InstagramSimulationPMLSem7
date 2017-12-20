@@ -132,9 +132,9 @@ class Api extends MY_Controller{
 		}
 		
 		$query = $this->db->query(
-			"Select l.IsUnlike, u.UserName, p.PostID, p.UserId, p.ImagePath, p.Content, p.Location, p.CreatedOn,
+			"Select COALESCE(l.IsUnlike, 1) As IsUnlike, u.UserName, p.PostID, p.UserId, p.ImagePath, p.Content, p.Location, p.CreatedOn,
 			(SELECT COUNT(c.id) FROM comment c where c.post_id = p.PostID) as TotalComment,
-			(SELECT COUNT(l.id) FROM likes l where l.post_id = p.PostID) as TotalLikes
+			(SELECT COUNT(l.id) FROM likes l where l.post_id = p.PostID and l.IsUnLike = 0) as TotalLikes
 			from 
         users u inner join posts p on p.UserId = u.id left join likes l on l.post_id = p.PostID
 				where u.id = '". $username['id'] ."' or u.id in (Select a.follow_user_id from follow a where a.user_id = '". $username['id'] ."') ORDER BY p.CreatedOn DESC"
@@ -330,7 +330,7 @@ class Api extends MY_Controller{
 	
 	function postRegisterUser(){
 		$this->load->model('muser');
-        $username = $this->input->post('UserName');
+    $username = $this->input->post('UserName');
 		$password = $this->input->post('Password');
 		$rpassword = $this->input->post('RPassword');
 		$email = $this->input->post('Email');
