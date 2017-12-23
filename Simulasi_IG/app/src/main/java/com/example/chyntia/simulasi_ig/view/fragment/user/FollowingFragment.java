@@ -1,6 +1,7 @@
 package com.example.chyntia.simulasi_ig.view.fragment.user;
 
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -17,8 +18,16 @@ import com.example.chyntia.simulasi_ig.view.activity.MainActivity;
 import com.example.chyntia.simulasi_ig.view.adapter.FollowingRVAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
+import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
+import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.response.UserFollowResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.UserProfileResponse;
 
 import java.util.HashMap;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by Chyntia on 5/23/2017.
@@ -30,12 +39,27 @@ public class FollowingFragment extends Fragment {
     ImageView ic_left,ic_right;
     RecyclerView rv;
     Button btn;
-    LoginDBAdapter loginDBAdapter;
+//    LoginDBAdapter loginDBAdapter;
     SessionManager session;
     String userName;
+    String token;
 
     public FollowingFragment() {
         // Required empty public constructor
+    }
+
+    public static FollowingFragment newInstance(String token){
+        Bundle args = new Bundle();
+        args.putString("TOKEN", token);
+        FollowingFragment fragment = new FollowingFragment();
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        token = getArguments().getString("TOKEN");
     }
 
     @Override
@@ -51,9 +75,6 @@ public class FollowingFragment extends Fragment {
     }
 
     private void init(View view) {
-
-        loginDBAdapter = new LoginDBAdapter(getContext());
-        loginDBAdapter = loginDBAdapter.open();
 
         session = new SessionManager(getContext());
         HashMap<String, String> user = session.getUserDetails();
@@ -76,18 +97,32 @@ public class FollowingFragment extends Fragment {
     }
 
     private void setupRV(){
+        ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+        Call<UserFollowResponse> call = apiRoute.getFollowing(token);
+        call.enqueue(new Callback<UserFollowResponse>() {
+            @Override
+            public void onResponse(Call<UserFollowResponse> call, Response<UserFollowResponse> response) {
+                UserFollowResponse data = response.body();
 
-        FollowingRVAdapter adapter = new FollowingRVAdapter(loginDBAdapter.getAllFollowing(loginDBAdapter.getID(userName)), getActivity().getApplication());
-        rv.setAdapter(adapter);
-        rv.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
+                if(data.isStatus()){
+                    FollowingRVAdapter adapter = new FollowingRVAdapter(data.getData(), getActivity().getApplication());
+                    rv.setAdapter(adapter);
+                    rv.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
+                }
+            }
 
+            @Override
+            public void onFailure(Call<UserFollowResponse> call, Throwable t) {
+
+            }
+        });
     }
 
     private void event() {
         ic_left.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainActivity) getActivity()).changefragment(new ProfileFragment(), "Profile");
+                ((MainActivity) getActivity()).onBackPressed();
             }
         });
     }

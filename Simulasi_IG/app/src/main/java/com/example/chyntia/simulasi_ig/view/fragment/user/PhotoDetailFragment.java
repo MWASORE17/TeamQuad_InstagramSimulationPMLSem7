@@ -3,6 +3,7 @@ package com.example.chyntia.simulasi_ig.view.fragment.user;
 import android.os.Bundle;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,12 +15,24 @@ import com.example.chyntia.simulasi_ig.view.activity.MainActivity;
 import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.TabGridRVAdapter;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
+import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
+import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.model.PostDetail;
+import com.example.chyntia.simulasi_ig.view.network.response.CResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.PostDetailResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.PostsResponse;
+import com.example.chyntia.simulasi_ig.view.utilities.DatetimeUtils;
 import com.like.LikeButton;
 import com.like.OnLikeListener;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
+import java.text.ParseException;
 import java.util.HashMap;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by Chyntia on 6/16/2017.
@@ -30,7 +43,7 @@ public class PhotoDetailFragment extends Fragment{
     TextView text, user_name, time, caption, location, username_caption, count_likes, view_comment;
     ImageView ic_left, ic_right, ic_send, photo, pp, comment;
     TabGridRVAdapter tabGridRVAdapter;
-    LoginDBAdapter loginDBAdapter;
+//    LoginDBAdapter loginDBAdapter;
     SessionManager session;
     String userName;
     LikeButton like;
@@ -39,6 +52,9 @@ public class PhotoDetailFragment extends Fragment{
     private static final int MINUTE_MILLIS = 60 * SECOND_MILLIS;
     private static final int HOUR_MILLIS = 60 * MINUTE_MILLIS;
     private static final int DAY_MILLIS = 24 * HOUR_MILLIS;
+
+    private PostDetail post;
+    private String token;
 
     public PhotoDetailFragment() {
         // Required empty public constructor
@@ -65,13 +81,10 @@ public class PhotoDetailFragment extends Fragment{
         return _view;
     }
 
-    private void init(View view) {
-
-        loginDBAdapter = new LoginDBAdapter(getContext());
-        loginDBAdapter = loginDBAdapter.open();
+    private void init(final View view) {
 
         session = new SessionManager(getContext());
-        HashMap<String, String> user = session.getUserDetails();
+        final HashMap<String, String> user = session.getUserDetails();
 
         userName = user.get(SessionManager.KEY_USERNAME);
 
@@ -85,129 +98,219 @@ public class PhotoDetailFragment extends Fragment{
         ic_right.setImageResource(0);
 
         pp = (ImageView) view.findViewById(R.id.pp_photo_detail);
-        if(loginDBAdapter.checkProfPic(loginDBAdapter.getID(userName))!=null){
-            Picasso
-                    .with(getContext())
-                    .load(new File(loginDBAdapter.getUserProfPic(loginDBAdapter.getID(userName))))
-                    .resize(dpToPx(20), dpToPx(20))
-                    .centerCrop()
-                    .error(R.drawable.ic_account_circle_black_24dp)
-                    .into(pp);
-        }
-        else
-            pp.setImageResource(R.drawable.ic_account_circle_black_24dp);
-
         user_name = (TextView) view.findViewById(R.id.nama_photo_detail);
-        user_name.setText(userName);
-
         photo = (ImageView) view.findViewById(R.id.photo_area_photo_detail);
-        Picasso
-                .with(getContext())
-                .load(new File(loginDBAdapter.getPhoto(posting_id)))
-                .resize(dpToPx(80), dpToPx(80))
-                .centerCrop()
-                .error(R.drawable.ic_account_circle_black_128dp)
-                .into(photo);
-
         time = (TextView) view.findViewById(R.id.time_photo_detail);
-        time.setText(getTimeAgo(Long.parseLong(loginDBAdapter.getPostingTime(posting_id))));
-
         caption = (TextView) view.findViewById(R.id.photo_caption_photo_detail);
         username_caption = (TextView) view.findViewById(R.id.username_caption_photo_detail);
-        if(loginDBAdapter.checkCaption(posting_id).equals(""))
-            caption.setVisibility(View.GONE);
-
-        else {
-            username_caption.setVisibility(View.VISIBLE);
-            username_caption.setText(userName);
-            caption.setVisibility(View.VISIBLE);
-            caption.setText(loginDBAdapter.checkCaption(posting_id));
-        }
-
-        location = (TextView) view.findViewById(R.id.location_photo_detail);
-        if(loginDBAdapter.checkLocation(posting_id).equals(""))
-            location.setVisibility(View.GONE);
-
-        else {
-            location.setVisibility(View.VISIBLE);
-            location.setText(loginDBAdapter.checkLocation(posting_id));
-        }
-
         like = (LikeButton) view.findViewById(R.id.icon_like_photo_detail);
         count_likes = (TextView) view.findViewById(R.id.count_likes_photo_detail);
-        if(loginDBAdapter.isLike(posting_id,loginDBAdapter.getID(userName))) {
-            like.setLiked(true);
-            like.setLikeDrawableRes(R.drawable.ic_heart_red);
-        }
+        location = (TextView) view.findViewById(R.id.location_photo_detail);
+        /**
+         * Retrofit
+         * */
+        ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+        Call<PostDetailResponse> call = apiRoute.getPostDetail(user.get(SessionManager.KEY_USERNAME), posting_id);
+        call.enqueue(new Callback<PostDetailResponse>() {
+            @Override
+            public void onResponse(Call<PostDetailResponse> call, Response<PostDetailResponse> response) {
+                PostDetailResponse data = response.body();
 
-        else {
-            like.setLiked(false);
-            like.setUnlikeDrawableRes(R.drawable.ic_heart_outline_grey);
-        }
+                if(data.isStatus()){
+                    post = data.getData();
 
-        if(loginDBAdapter.check_TBLikes().equals("NOT EMPTY")){
-            count_likes.setVisibility(View.VISIBLE);
+                    if(post.getImagePath() != ""){
+                        Picasso
+                                .with(getContext())
+                                .load(ApiRetrofit.URL + post.getUserImagePath())
+                                .resize(dpToPx(20), dpToPx(20))
+                                .centerCrop()
+                                .error(R.drawable.ic_account_circle_black_24dp)
+                                .into(pp);
+                    }
+                    else
+                        pp.setImageResource(R.drawable.ic_account_circle_black_24dp);
 
-            if(loginDBAdapter.getAllLikes(posting_id).size()==0)
-                count_likes.setVisibility(View.GONE);
+                    user_name.setText(post.getUserName());
+                    Picasso
+                            .with(getContext())
+                            .load(ApiRetrofit.URL + post.getImagePath())
+                            .resize(dpToPx(80), dpToPx(80))
+                            .centerCrop()
+                            .error(R.drawable.ic_account_circle_black_128dp)
+                            .into(photo);
 
-            else if(loginDBAdapter.getAllLikes(posting_id).size()==1)
-                count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(posting_id).size())+" like");
+                    try {
+                        time.setText(getTimeAgo(DatetimeUtils.stringToDate(post.getCreatedOn()).getTime()));
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
 
-            else
-                count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(posting_id).size())+" likes");
-        }
+                    if(post.getContent() == "")
+                        caption.setVisibility(View.GONE);
+
+                    else {
+                        username_caption.setVisibility(View.VISIBLE);
+                        username_caption.setText(post.getUserName());
+                        caption.setVisibility(View.VISIBLE);
+                        caption.setText(post.getContent());
+                    }
+
+                    if(post.getLocation() == "")
+                        location.setVisibility(View.GONE);
+
+                    else {
+                        location.setVisibility(View.VISIBLE);
+                        location.setText(post.getLocation());
+                    }
+
+
+                    if(post.getIsUnlike() == 0) {
+                        like.setLiked(true);
+                        like.setLikeDrawableRes(R.drawable.ic_heart_red);
+                    }
+
+                    else {
+                        like.setLiked(false);
+                        like.setUnlikeDrawableRes(R.drawable.ic_heart_outline_grey);
+                    }
+
+                    if(post.getTotalLikes() > 0){
+                        count_likes.setVisibility(View.VISIBLE);
+
+                        if(post.getTotalLikes() == 0)
+                            count_likes.setVisibility(View.GONE);
+
+                        else if(post.getTotalLikes() == 1)
+                            count_likes.setText(String.valueOf(post.getTotalLikes() +" like"));
+
+                        else
+                            count_likes.setText(String.valueOf(post.getTotalLikes() +" likes"));
+                    }
+
+                    if(post.getTotalComment() != 0) {
+                        view_comment.setVisibility(View.VISIBLE);
+                        if(post.getTotalComment() == 0){
+                            view_comment.setVisibility(View.GONE);
+                        }
+                        else if(post.getTotalComment() == 1) {
+                            view_comment.setText("View 1 comment");
+                            view_comment.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    int position = post.getPostID();
+                                    UserCommentFragment ucf = new UserCommentFragment();
+                                    final Bundle args = new Bundle();
+                                    args.putInt("POSITION", position);
+                                    ucf.setArguments(args);
+                                    ((MainActivity) v.getContext()).changefragment(ucf, "UserComment");
+                                }
+                            });
+                        }
+
+                        else{
+                            view_comment.setText("View all "+String.valueOf(post.getTotalComment() + " comments"));
+                            view_comment.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    int position = post.getPostID();
+                                    UserCommentFragment ucf = new UserCommentFragment();
+                                    final Bundle args = new Bundle();
+                                    args.putInt("POSITION", position);
+                                    ucf.setArguments(args);
+                                    ((MainActivity) v.getContext()).changefragment(ucf, "UserComment");
+                                }
+                            });
+                        }
+                    }
+                }
+                else{
+
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PostDetailResponse> call, Throwable t) {
+                Log.e("ERR", String.valueOf(t.getMessage()));
+            }
+        });
+
+
 
         like.setOnLikeListener(new OnLikeListener() {
             @Override
             public void liked(LikeButton likeButton) {
                 count_likes.setVisibility(View.VISIBLE);
+                String token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
+                /** Insert Like*/
+                ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+                Call<CResponse> call = apiRoute.postLike(token, post.getPostID());
+                call.enqueue(new Callback<CResponse>() {
+                    @Override
+                    public void onResponse(Call<CResponse> call, Response<CResponse> response) {
+                        CResponse data = response.body();
 
-                loginDBAdapter.insert_Likes(posting_id,loginDBAdapter.getID(userName),loginDBAdapter.getUserProfPic(loginDBAdapter.getID(userName)),String.valueOf(System.currentTimeMillis()));
+                        if(data.isStatus()){
+                            Log.i("Success IG", data.getMessage());
+                        }
+                        else{
+                            Log.e("Failed IG", data.getMessage());
+                        }
+                    }
 
-                if(loginDBAdapter.getAllLikes(posting_id).size()==0)
+                    @Override
+                    public void onFailure(Call<CResponse> call, Throwable t) {
+                        Log.e("ERR", String.valueOf(t.getMessage()));                    }
+                });
+
+                /** Insert Notif*/
+
+                post.setTotalLikes(post.getTotalLikes()+ 1);
+                int totalLikes = post.getTotalLikes();
+                if (totalLikes == 0)
                     count_likes.setVisibility(View.GONE);
 
-                else if(loginDBAdapter.getAllLikes(posting_id).size()==1)
-                    count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(posting_id).size())+" like");
+                else if (totalLikes == 1)
+                    count_likes.setText(1 + " like");
 
                 else
-                    count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(posting_id).size())+" likes");
-
-                /*
-                loginDBAdapter.updateUserLikes(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition())+1,loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition());
-                if(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()) == 1) {
-                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()))+" like");
-                }
-
-                else{
-                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()))+" likes");
-                }*/
+                    count_likes.setText(totalLikes + " likes");
             }
 
             @Override
             public void unLiked(LikeButton likeButton) {
                 count_likes.setVisibility(View.VISIBLE);
 
-                loginDBAdapter.delete_Likes(posting_id,loginDBAdapter.getID(userName));
+                ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+                Call<CResponse> call = apiRoute.postUnLike(token, post.getPostID());
+                call.enqueue(new Callback<CResponse>() {
+                    @Override
+                    public void onResponse(Call<CResponse> call, Response<CResponse> response) {
+                        CResponse data = response.body();
 
-                if(loginDBAdapter.getAllLikes(posting_id).size()==0)
-                   count_likes.setVisibility(View.GONE);
+                        if(data.isStatus()){
+                            Log.i("Success IG", data.getMessage());
+                        }
+                        else{
+                            Log.e("Failed IG", data.getMessage());
+                        }
+                    }
 
-                else if(loginDBAdapter.getAllLikes(posting_id).size()==1)
-                    count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(posting_id).size())+" like");
+                    @Override
+                    public void onFailure(Call<CResponse> call, Throwable t) {
+                        Log.e("ERR", String.valueOf(t.getMessage()));                    }
+                });
+
+                post.setTotalLikes(post.getTotalLikes()-1);
+                int totalLikes = post.getTotalLikes();
+                if (totalLikes == 0)
+                    count_likes.setVisibility(View.GONE);
+
+                else if (totalLikes == 1)
+                    count_likes.setText(1 + " like");
 
                 else
-                    count_likes.setText(String.valueOf(loginDBAdapter.getAllLikes(posting_id).size())+" likes");
-                /*
-                loginDBAdapter.updateUserLikes(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition())-1,loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition());
-                if(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()) == 1) {
-                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()))+" like");
-                }
-
-                else{
-                    _holder.count_likes.setText(String.valueOf(loginDBAdapter.getCountLikes(loginDBAdapter.getAllPosting().size()-_holder.getAdapterPosition()))+" likes");
-                }*/
+                    count_likes.setText(totalLikes + " likes");
             }
         });
 
@@ -216,7 +319,7 @@ public class PhotoDetailFragment extends Fragment{
         comment.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                int position = posting_id;
+                int position = post.getPostID();
                 UserCommentFragment ucf = new UserCommentFragment();
                 final Bundle args = new Bundle();
                 args.putInt("POSITION", position);
@@ -224,42 +327,6 @@ public class PhotoDetailFragment extends Fragment{
                 ((MainActivity) v.getContext()).changefragment(ucf, "UserComment");
             }
         });
-
-        if(loginDBAdapter.check_TBComments().equals("NOT EMPTY")) {
-            view_comment.setVisibility(View.VISIBLE);
-            if(loginDBAdapter.getAllComments(posting_id).size() == 0){
-                view_comment.setVisibility(View.GONE);
-            }
-            else if(loginDBAdapter.getAllComments(posting_id).size() == 1) {
-                view_comment.setText("View 1 comment");
-                view_comment.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        int position = posting_id;
-                        UserCommentFragment ucf = new UserCommentFragment();
-                        final Bundle args = new Bundle();
-                        args.putInt("POSITION", position);
-                        ucf.setArguments(args);
-                        ((MainActivity) v.getContext()).changefragment(ucf, "UserComment");
-                    }
-                });
-            }
-
-            else{
-                view_comment.setText("View all "+String.valueOf(loginDBAdapter.getAllComments(posting_id).size())+" comments");
-                view_comment.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        int position = posting_id;
-                        UserCommentFragment ucf = new UserCommentFragment();
-                        final Bundle args = new Bundle();
-                        args.putInt("POSITION", position);
-                        ucf.setArguments(args);
-                        ((MainActivity) v.getContext()).changefragment(ucf, "UserComment");
-                    }
-                });
-            }
-        }
     }
 
     private int dpToPx(int dp)
@@ -272,7 +339,7 @@ public class PhotoDetailFragment extends Fragment{
         ic_left.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainActivity) getActivity()).changefragment(new ProfileFragment(),"Profile");
+                ((MainActivity) getActivity()).onBackPressed();
             }
         });
     }

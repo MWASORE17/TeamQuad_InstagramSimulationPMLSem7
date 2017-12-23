@@ -1,31 +1,25 @@
-package com.example.chyntia.simulasi_ig.view.model.entity;
+package com.example.chyntia.simulasi_ig.view.network.model;
 
 /**
- * Created by Chyntia on 6/15/2017.
+ * Created by Vinixz on 12/20/2017.
  */
 
-public class Data_Comments {
-    public String username_comments, profPic, comments_content, created_at;
-
+public class Comment {
     private int id;
     private int post_id;
-    private String user_id;
+    private int user_id;
     private String content;
     private String created_on;
+    private String username;
+    private String user_image;
 
-    public Data_Comments(String profPic, String username_comments, String comments_content, String created_at){
-        this.profPic =  profPic;
-        this.username_comments = username_comments;
-        this.comments_content = comments_content;
-        this.created_at = created_at;
-    }
-
-    public Data_Comments(int id, int post_id, String user_id, String content, String created_on) {
-        this.id = id;
+    public Comment(int post_id, int user_id, String content, String created_on, String username, String user_image) {
         this.post_id = post_id;
         this.user_id = user_id;
         this.content = content;
         this.created_on = created_on;
+        this.username = username;
+        this.user_image = user_image;
     }
 
     public int getId() {
@@ -44,11 +38,11 @@ public class Data_Comments {
         this.post_id = post_id;
     }
 
-    public String getUser_id() {
+    public int getUser_id() {
         return user_id;
     }
 
-    public void setUser_id(String user_id) {
+    public void setUser_id(int user_id) {
         this.user_id = user_id;
     }
 
@@ -66,5 +60,21 @@ public class Data_Comments {
 
     public void setCreated_on(String created_on) {
         this.created_on = created_on;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getUser_image() {
+        return user_image;
+    }
+
+    public void setUser_image(String user_image) {
+        this.user_image = user_image;
     }
 }

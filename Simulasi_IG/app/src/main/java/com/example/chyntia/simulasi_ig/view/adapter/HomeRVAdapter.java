@@ -1,6 +1,7 @@
 package com.example.chyntia.simulasi_ig.view.adapter;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,13 +11,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.chyntia.simulasi_ig.R;
+import com.example.chyntia.simulasi_ig.view.activity.MainActivity;
+import com.example.chyntia.simulasi_ig.view.fragment.user.UserCommentFragment;
 import com.example.chyntia.simulasi_ig.view.model.entity.Data_TL;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
 import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
 import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.model.PostDetail;
 import com.example.chyntia.simulasi_ig.view.network.response.CResponse;
-import com.example.chyntia.simulasi_ig.view.network.response.LoginResponse;
-import com.example.chyntia.simulasi_ig.view.network.response.PostResponse;
 import com.example.chyntia.simulasi_ig.view.utilities.DatetimeUtils;
 import com.like.LikeButton;
 import com.like.OnLikeListener;
@@ -24,7 +26,6 @@ import com.squareup.picasso.Picasso;
 
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -35,7 +36,7 @@ import retrofit2.Response;
  */
 
 public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    ArrayList<PostResponse> user;
+    ArrayList<PostDetail> user;
     Context context;
     private boolean isButtonClicked = false;
 
@@ -49,7 +50,7 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     private static final int HOUR_MILLIS = 60 * MINUTE_MILLIS;
     private static final int DAY_MILLIS = 24 * HOUR_MILLIS;
 
-    public HomeRVAdapter(ArrayList<PostResponse> user, Context context) {
+    public HomeRVAdapter(ArrayList<PostDetail> user, Context context) {
         session = new SessionManager(context);
 
         this.user = user;
@@ -60,10 +61,6 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         //Inflate the layout, initialize the View Holder
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.custom_row_timeline, parent, false);
-
-        /*loginDBAdapter = new LoginDBAdapter(context);
-        loginDBAdapter = loginDBAdapter.open();*/
-
         return new HomeRVAdapter.ViewHolder(v);
     }
 
@@ -71,19 +68,17 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
         final String token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
         final HomeRVAdapter.ViewHolder _holder = (HomeRVAdapter.ViewHolder) holder;
-        final PostResponse _post = this.user.get(position);
+        final PostDetail _post = this.user.get(position);
         //Use the provided View Holder on the onCreateViewHolder method to populate the current row on the RecyclerView
         _holder.nama.setText(_post.getUserName());
 
         if (_post.getUserName().equals("airasia"))
             _holder.title_advertisement.setVisibility(View.VISIBLE);
 
-        if (_post.getImagePath() == "" || _post.getImagePath() == null) {
+        if (_post.getUserImagePath() != "") {
             Picasso
                     .with(context)
-                    .load(ApiRetrofit.URL + _post.getImagePath())
-                    .resize(dpToPx(20), dpToPx(20))
-                    .centerCrop()
+                    .load(ApiRetrofit.URL + _post.getUserImagePath())
                     .error(R.drawable.ic_account_circle_black_24dp)
                     .into(_holder.pp);
         } else
@@ -92,50 +87,38 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         _holder.comment.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-               /* int position = loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition();
+                int position = _post.getPostID();
                 UserCommentFragment ucf = new UserCommentFragment();
                 final Bundle args = new Bundle();
                 args.putInt("POSITION", position);
                 ucf.setArguments(args);
-                ((MainActivity) v.getContext()).changefragment(ucf, "UserComment");*/
+                ((MainActivity) v.getContext()).changefragment(ucf, "UserComment");
             }
         });
 
-     /*   if(loginDBAdapter.check_TBComments().equals("NOT EMPTY")) {
+        if(_post.getTotalComment() > 0) {
             _holder.view_comment.setVisibility(View.VISIBLE);
-            if(loginDBAdapter.getAllComments(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).size() == 0){
+            if(_post.getTotalComment() == 0){
                 _holder.view_comment.setVisibility(View.GONE);
             }
-            else if(loginDBAdapter.getAllComments(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).size() == 1) {
+            else if(_post.getTotalComment() == 1) {
                 _holder.view_comment.setText("View 1 comment");
-                _holder.view_comment.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        int position = loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition();
-                        UserCommentFragment ucf = new UserCommentFragment();
-                        final Bundle args = new Bundle();
-                        args.putInt("POSITION", position);
-                        ucf.setArguments(args);
-                        ((MainActivity) v.getContext()).changefragment(ucf, "UserComment");
-                    }
-                });
             }
-
             else{
-                _holder.view_comment.setText("View all "+String.valueOf(loginDBAdapter.getAllComments(loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size()-_holder.getAdapterPosition()).size())+" comments");
-                _holder.view_comment.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        int position = loginDBAdapter.getAllPosting(loginDBAdapter.getID(userName)).size() - _holder.getAdapterPosition();
-                        UserCommentFragment ucf = new UserCommentFragment();
-                        final Bundle args = new Bundle();
-                        args.putInt("POSITION", position);
-                        ucf.setArguments(args);
-                        ((MainActivity) v.getContext()).changefragment(ucf, "UserComment");
-                    }
-                });
+                _holder.view_comment.setText("View all "+String.valueOf(_post.getTotalComment() +" comments"));
             }
-        }*/
+            _holder.view_comment.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int position = _post.getPostID();
+                    UserCommentFragment ucf = new UserCommentFragment();
+                    final Bundle args = new Bundle();
+                    args.putInt("POSITION", position);
+                    ucf.setArguments(args);
+                    ((MainActivity) v.getContext()).changefragment(ucf, "UserComment");
+                }
+            });
+        }
 
         /** User Liked Post*/
         if(user.get(position).getIsUnlike() == 0) {
@@ -184,8 +167,7 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
                     @Override
                     public void onFailure(Call<CResponse> call, Throwable t) {
-                        Log.d("Failed IG", t.getMessage());
-                    }
+                        Log.e("ERR", String.valueOf(t.getMessage()));                    }
                 });
 
                 /** Insert Notif*/
@@ -225,8 +207,7 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
                     @Override
                     public void onFailure(Call<CResponse> call, Throwable t) {
-                        Log.d("Failed IG", t.getMessage());
-                    }
+                        Log.e("ERR", String.valueOf(t.getMessage()));                    }
                 });
 
                 user.get(position).setTotalLikes(user.get(position).getTotalLikes()-1);
@@ -295,7 +276,7 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     }
 
     // Insert a new item to the RecyclerView on a predefined position
-    public void insert(int position, PostResponse data) {
+    public void insert(int position, PostDetail data) {
         user.add(position, data);
         notifyItemInserted(position);
     }

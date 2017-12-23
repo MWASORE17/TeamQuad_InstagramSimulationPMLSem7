@@ -1,14 +1,17 @@
-package com.example.chyntia.simulasi_ig.view.network.response;
+package com.example.chyntia.simulasi_ig.view.network.model;
+
+import com.example.chyntia.simulasi_ig.view.network.response.CResponse;
 
 /**
  * Created by Vinixz on 12/6/2017.
  */
 
-public class PostResponse extends CResponse {
+public class PostDetail  {
 
     private String UserName;
     private int PostID;
     private int UserId;
+    private String UserImagePath;
     private String ImagePath;
     private String Content;
     private String Location;
@@ -16,19 +19,6 @@ public class PostResponse extends CResponse {
     private int TotalComment;
     private int TotalLikes;
     private int IsUnlike;
-
-    public PostResponse(String message, boolean status, String userName, int postID, int userId, String imagePath, String content, String location, String createdOn, int totalComment, int totalLikes) {
-        super(message, status);
-        UserName = userName;
-        PostID = postID;
-        UserId = userId;
-        ImagePath = imagePath;
-        Content = content;
-        Location = location;
-        CreatedOn = createdOn;
-        TotalComment = totalComment;
-        TotalLikes = totalLikes;
-    }
 
     public String getUserName() {
         return UserName;
@@ -108,5 +98,13 @@ public class PostResponse extends CResponse {
 
     public void setIsUnlike(int isUnlike) {
         IsUnlike = isUnlike;
+    }
+
+    public String getUserImagePath() {
+        return UserImagePath;
+    }
+
+    public void setUserImagePath(String userImagePath) {
+        UserImagePath = userImagePath;
     }
 }

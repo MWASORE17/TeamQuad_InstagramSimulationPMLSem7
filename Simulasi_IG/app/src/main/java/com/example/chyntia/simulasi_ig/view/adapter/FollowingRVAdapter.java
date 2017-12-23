@@ -1,6 +1,7 @@
 package com.example.chyntia.simulasi_ig.view.adapter;
 
 import android.content.Context;
+import android.content.pm.PackageInstaller;
 import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -12,28 +13,41 @@ import android.widget.TextView;
 
 import com.example.chyntia.simulasi_ig.R;
 import com.example.chyntia.simulasi_ig.view.model.entity.Data_Follow;
+import com.example.chyntia.simulasi_ig.view.model.entity.User;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
+import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
+import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.response.CResponse;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import static com.example.chyntia.simulasi_ig.R.drawable.btn_follow;
+
 /**
  * Created by Chyntia on 5/31/2017.
  */
 
 public class FollowingRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    List<Data_Follow> user;
+    List<User> user;
     Context context;
     private boolean isButtonClicked = false;
-    LoginDBAdapter loginDBAdapter;
+//    LoginDBAdapter loginDBAdapter;
     SessionManager session;
     String userName;
+    String token;
 
-    public FollowingRVAdapter(List<Data_Follow> user, Context context) {
+    public FollowingRVAdapter(List<User> user, Context context) {
         this.user = user;
         this.context = context;
+        session = new SessionManager(context);
+        token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
     }
 
     @Override
@@ -41,10 +55,6 @@ public class FollowingRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         //Inflate the layout, initialize the View Holder
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.custom_row_user, parent, false);
 
-        loginDBAdapter = new LoginDBAdapter(context);
-        loginDBAdapter = loginDBAdapter.open();
-
-        session = new SessionManager(context);
         HashMap<String, String> user = session.getUserDetails();
 
         userName = user.get(SessionManager.KEY_USERNAME);
@@ -55,14 +65,14 @@ public class FollowingRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder,int position) {
         final FollowingRVAdapter.ViewHolder _holder = (FollowingRVAdapter.ViewHolder) holder;
-        final Data_Follow _user = this.user.get(position);
+        final User _user = this.user.get(position);
         //Use the provided View Holder on the onCreateViewHolder method to populate the current row on the RecyclerView
-        _holder.nama.setText(_user.nama);
+        _holder.nama.setText(_user.getUserName());
 
-        if(loginDBAdapter.checkProfPic(loginDBAdapter.getID(_user.nama))!=null){
+        if(_user.getImagePath() != ""){
             Picasso
                     .with(context)
-                    .load(new File(_user.pp))
+                    .load(ApiRetrofit.URL + _user.getImagePath())
                     .resize(dpToPx(20), dpToPx(20))
                     .centerCrop()
                     .error(R.drawable.ic_account_circle_black_24dp)
@@ -77,10 +87,9 @@ public class FollowingRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         _holder.btn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                follow_states(v,_holder);
+                follow_states(v,_holder, _user);
             }
         });
-        //animate(holder);
     }
 
     private int dpToPx(int dp)
@@ -89,20 +98,51 @@ public class FollowingRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         return Math.round((float)dp * density);
     }
 
-    public void follow_states(View v, ViewHolder _holder){
+    public void follow_states(View v, ViewHolder _holder, final User user){
         if (v.getId() == R.id.btn) {
             isButtonClicked = !isButtonClicked; // toggle the boolean flag
-            if(isButtonClicked)
-            {
-                loginDBAdapter.delete_Following(loginDBAdapter.getID(_holder.nama.getText().toString()));
-                _holder.btn.setTextColor(Color.WHITE);
+            /** FOLLOW */
+            if(isButtonClicked){
+                ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+                Call<CResponse> call = apiRoute.unFollow(token, user.getUserName());
+                call.enqueue(new Callback<CResponse>() {
+                    @Override
+                    public void onResponse(Call<CResponse> call, Response<CResponse> response) {
+                        CResponse data = response.body();
+
+                    }
+
+                    @Override
+                    public void onFailure(Call<CResponse> call, Throwable t) {
+
+                    }
+                });
+
                 _holder.btn.setText("Follow");
-                v.setBackgroundResource(R.drawable.btn_follow);
+                _holder.btn.setTextColor(Color.WHITE);
+                v.setBackgroundResource(btn_follow);
             }
-            /*
-            _holder.btn.setText(isButtonClicked ? "Following" : "Follow");
-            _holder.btn.setTextColor(isButtonClicked ? Color.BLACK : Color.WHITE);
-            v.setBackgroundResource(isButtonClicked ? R.drawable.btn_following : R.drawable.btn_follow);*/
+
+            else{
+                ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+                Call<CResponse> call = apiRoute.follow(token, user.getUserName());
+                call.enqueue(new Callback<CResponse>() {
+                    @Override
+                    public void onResponse(Call<CResponse> call, Response<CResponse> response) {
+                        CResponse data = response.body();
+
+                    }
+
+                    @Override
+                    public void onFailure(Call<CResponse> call, Throwable t) {
+
+                    }
+                });
+
+                _holder.btn.setText("Following");
+                _holder.btn.setTextColor(Color.BLACK);
+                v.setBackgroundResource(R.drawable.btn_following);
+            }
         }
     }
 
@@ -118,7 +158,7 @@ public class FollowingRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     // Insert a new item to the RecyclerView on a predefined position
-    public void insert(int position, Data_Follow dataFollow) {
+    public void insert(int position, User dataFollow) {
         user.add(position, dataFollow);
         notifyItemInserted(position);
     }

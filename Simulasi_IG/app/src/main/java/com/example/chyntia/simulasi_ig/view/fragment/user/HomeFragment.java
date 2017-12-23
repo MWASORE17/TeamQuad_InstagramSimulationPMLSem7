@@ -18,8 +18,7 @@ import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
 import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
 import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
-import com.example.chyntia.simulasi_ig.view.network.response.FeedResponse;
-import com.example.chyntia.simulasi_ig.view.network.response.PostResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.PostsResponse;
 import com.nshmura.snappysmoothscroller.SnapType;
 import com.nshmura.snappysmoothscroller.SnappyLinearLayoutManager;
 
@@ -97,11 +96,11 @@ public class HomeFragment extends Fragment {
         HashMap<String, String> user = session.getUserDetails();
 
         ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
-        Call<FeedResponse> call = apiRoute.getTimelinePost(user.get(SessionManager.KEY_USERNAME));
-        call.enqueue(new Callback<FeedResponse>() {
+        Call<PostsResponse> call = apiRoute.getTimelinePost(user.get(SessionManager.KEY_USERNAME));
+        call.enqueue(new Callback<PostsResponse>() {
             @Override
-            public void onResponse(Call<FeedResponse> call, Response<FeedResponse> response) {
-                FeedResponse data = response.body();
+            public void onResponse(Call<PostsResponse> call, Response<PostsResponse> response) {
+                PostsResponse data = response.body();
 
                 if(data.isStatus()){
                     if(data.getFeeds().size() > 0){
@@ -125,8 +124,8 @@ public class HomeFragment extends Fragment {
             }
 
             @Override
-            public void onFailure(Call<FeedResponse> call, Throwable t) {
-                Toast.makeText(getContext(), "Could not refresh feed !" + t.getMessage(), Toast.LENGTH_LONG).show();
+            public void onFailure(Call<PostsResponse> call, Throwable t) {
+                Toast.makeText(getContext(), "Could not refresh feed !", Toast.LENGTH_LONG).show();
             }
         });
     }

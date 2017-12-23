@@ -10,8 +10,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 
 public class ApiRetrofit {
-    public static final String URL = "http://192.168.100.77:8080/PMD/api/assets/images/uploaded/";
-    public static final String BASE_URL = "http://192.168.100.77:8080/PMD/api/api/";
+    public static final String URL = "http://IP KAMU:8080/PMD/api/assets/images/uploaded/";
+    public static final String BASE_URL = "http://IP KAMU:8080/PMD/api/api/";
     public static Retrofit retrofit;
 
     public static Retrofit getApiClient(){

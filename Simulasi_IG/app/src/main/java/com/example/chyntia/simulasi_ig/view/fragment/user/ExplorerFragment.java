@@ -63,23 +63,6 @@ public class ExplorerFragment extends Fragment {
         CircularProgressView progressView = (CircularProgressView) view.findViewById(R.id.progress_view);
         progressView.startAnimation();
     }
-/*
-    public List<Data_Posting_Grid> fill_with_data() {
-
-        List<Data_Posting_Grid> data = new ArrayList<>();
-
-        data.add(new Data_Posting_Grid(1,"ONE"));
-        data.add(new Data_Posting_Grid(2,"TWO"));
-        data.add(new Data_Posting_Grid(3,"THREE"));
-        data.add(new Data_Posting_Grid(4,"FOUR"));
-        data.add(new Data_Posting_Grid(5,"FIVE"));
-        data.add(new Data_Posting_Grid(6,"SIX"));
-        data.add(new Data_Posting_Grid(7,"SEVEN"));
-        data.add(new Data_Posting_Grid(8,"EIGHT"));
-        data.add(new Data_Posting_Grid(9,"NINE"));
-
-        return data;
-    }*/
 
     private void event() {
         text.setOnClickListener(new View.OnClickListener() {

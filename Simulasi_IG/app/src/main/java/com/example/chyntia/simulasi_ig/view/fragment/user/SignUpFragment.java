@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -148,7 +149,7 @@ public class SignUpFragment extends Fragment {
         if (_isvalid) {
             // Save the Data_Follow in Database
             ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
-            Call<CResponse> call = apiRoute.register(Username, Password, confirm_pass, Email);
+            Call<CResponse> call = apiRoute.register(Fullname, Username, Password, confirm_pass, Email);
             call.enqueue(new Callback<CResponse>() {
                 @Override
                 public void onResponse(Call<CResponse> call, Response<CResponse> response) {
@@ -169,7 +170,7 @@ public class SignUpFragment extends Fragment {
 
                 @Override
                 public void onFailure(Call<CResponse> call, Throwable t) {
-                    Toast.makeText(getContext(), t.getMessage(), Toast.LENGTH_LONG).show();
+                    Log.e("ERR", String.valueOf(t.getMessage()));
                 }
             });
 //            loginDBAdapter.insertEntry(Username, Fullname, Email, null, Password, "");

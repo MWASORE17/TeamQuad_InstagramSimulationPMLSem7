@@ -10,6 +10,7 @@ import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,8 +29,23 @@ import com.example.chyntia.simulasi_ig.view.adapter.HomeRVAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.UserCommentRVAdapter;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
+import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
+import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.model.Comment;
+import com.example.chyntia.simulasi_ig.view.network.response.CResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.CommentResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.UserProfileResponse;
+import com.example.chyntia.simulasi_ig.view.utilities.DatetimeUtils;
 
+import java.text.ParseException;
+import java.util.Date;
 import java.util.HashMap;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import static com.example.chyntia.simulasi_ig.view.utilities.DatetimeUtils.dateToString;
 
 /**
  * Created by Chyntia on 5/28/2017.
@@ -41,10 +57,11 @@ public class UserCommentFragment extends Fragment {
     ImageView ic_left,ic_right,ic_send;
     EditText comment;
     RecyclerView rv;
-    LoginDBAdapter loginDBAdapter;
+//    LoginDBAdapter loginDBAdapter;
     SessionManager session;
     String userName;
     MyAsyncTask myAsyncTask;
+    UserCommentRVAdapter adapter;
     int posting_id;
 
     public UserCommentFragment() {
@@ -75,9 +92,6 @@ public class UserCommentFragment extends Fragment {
     }
 
     private void init(View view) {
-
-        loginDBAdapter = new LoginDBAdapter(getContext());
-        loginDBAdapter = loginDBAdapter.open();
 
         session = new SessionManager(getContext());
         HashMap<String, String> user = session.getUserDetails();
@@ -116,11 +130,56 @@ public class UserCommentFragment extends Fragment {
         ic_send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                loginDBAdapter.insert_Comments(posting_id,loginDBAdapter.getID(userName),loginDBAdapter.getUserProfPic(loginDBAdapter.getID(userName)),comment.getText().toString(),String.valueOf(System.currentTimeMillis()));
+                final String comment_text = comment.getText().toString();
+
+                final String token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
+                ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+                Call<CResponse> call = apiRoute.AddComment(token, posting_id, comment.getText().toString());
+                call.enqueue(new Callback<CResponse>() {
+                    @Override
+                    public void onResponse(Call<CResponse> call, Response<CResponse> response) {
+                        CResponse data = response.body();
+
+                        if(data.isStatus()){
+                            ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+                            Call<UserProfileResponse> call2 = apiRoute.GetUserProfile(token);
+                            call2.enqueue(new Callback<UserProfileResponse>() {
+                                @Override
+                                public void onResponse(Call<UserProfileResponse> call, Response<UserProfileResponse> response) {
+                                    UserProfileResponse data2 = response.body();
+
+                                    if(data2.isStatus() != false) {
+                                        try {
+                                            Comment com = new Comment(posting_id, data2.getData().getId(), comment_text.toString(), DatetimeUtils.dateToString(new Date()), data2.getData().getUserName(), data2.getData().getImagePath());
+                                            adapter.add(com);
+
+                                        } catch (ParseException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(Call<UserProfileResponse> call, Throwable t) {
+
+                                }
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<CResponse> call, Throwable t) {
+
+                    }
+                });
+                comment.setText("");
+                hideKeyboard(getContext());
+
+              /*  loginDBAdapter.insert_Comments(posting_id,loginDBAdapter.getID(userName),loginDBAdapter.getUserProfPic(loginDBAdapter.getID(userName)),comment.getText().toString(),String.valueOf(System.currentTimeMillis()));
                 loginDBAdapter.insert_Notif(loginDBAdapter.getUserProfPic(loginDBAdapter.getID(userName)),loginDBAdapter.getID(userName),"Comment",String.valueOf(System.currentTimeMillis()),posting_id,0);
                 hideKeyboard(getContext());
                 myAsyncTask = new MyAsyncTask();
-                myAsyncTask.execute();
+                myAsyncTask.execute();*/
             }
         });
     }
@@ -144,12 +203,26 @@ public class UserCommentFragment extends Fragment {
     }
 
     private void setupRV(){
+        String token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
 
-        if(loginDBAdapter.check_TBComments().equals("NOT EMPTY")){
-            UserCommentRVAdapter adapter = new UserCommentRVAdapter(loginDBAdapter.getAllComments(posting_id), getActivity().getApplication());
-            rv.setAdapter(adapter);
-            rv.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
-        }
+        ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+        Call<CommentResponse> call = apiRoute.getComment(token, posting_id);
+        call.enqueue(new Callback<CommentResponse>() {
+            @Override
+            public void onResponse(Call<CommentResponse> call, Response<CommentResponse> response) {
+                CommentResponse data = response.body();
+
+                if(data.isStatus()){
+                    adapter = new UserCommentRVAdapter(data.getData(), getActivity().getApplication());
+                    rv.setAdapter(adapter);
+                    rv.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<CommentResponse> call, Throwable t) {
+                Log.e("ERR", String.valueOf(t.getMessage()));            }
+        });
     }
 
     class MyAsyncTask extends AsyncTask<Void, Integer, Void> {
@@ -207,10 +280,6 @@ public class UserCommentFragment extends Fragment {
             //getProfilePic();
             comment.setText("");
             setupRV();
-
-            /*Toast.makeText(getActivity(),
-                    "Your Profile Picture was Changed",
-                    Toast.LENGTH_LONG).show();*/
 
             progressDialog.dismiss();
 

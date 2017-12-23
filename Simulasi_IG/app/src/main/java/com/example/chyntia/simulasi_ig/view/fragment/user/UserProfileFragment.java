@@ -6,6 +6,7 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -20,10 +21,24 @@ import com.example.chyntia.simulasi_ig.view.activity.MainActivity;
 import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.ProfileVPAdapter;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
+import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
+import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.model.UserProfile;
+import com.example.chyntia.simulasi_ig.view.network.model.UserProfileSearch;
+import com.example.chyntia.simulasi_ig.view.network.response.CResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.PostsResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.UserProfileResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.UserProfileSearchResponse;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.util.HashMap;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import static android.R.attr.data;
 
 /**
  * Created by Chyntia on 6/19/2017.
@@ -40,8 +55,11 @@ public class UserProfileFragment extends Fragment {
     SwipeRefreshLayout mSwipeRefreshLayout;
     private boolean isButtonClicked = false;
     SessionManager session;
-    LoginDBAdapter loginDBAdapter;
-    String userName, username_profile;
+    UserProfileSearch user;
+    ViewPager viewPagerProfile;
+//    LoginDBAdapter loginDBAdapter;
+    String userName;
+    int username_profile;
 
     public UserProfileFragment() {
         // Required empty public constructor
@@ -54,7 +72,7 @@ public class UserProfileFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        username_profile = getArguments().getString("USERNAME");
+        username_profile = getArguments().getInt("USERNAME");
     }
 
     @Override
@@ -68,19 +86,16 @@ public class UserProfileFragment extends Fragment {
         return _view;
     }
 
-    private void init(View view) {
-
-        loginDBAdapter = new LoginDBAdapter(getContext());
-        loginDBAdapter = loginDBAdapter.open();
+    private void init(final View view) {
 
         session = new SessionManager(getContext());
-        HashMap<String, String> user = session.getUserDetails();
+        HashMap<String, String> user12 = session.getUserDetails();
 
         // name
-        userName = user.get(SessionManager.KEY_USERNAME);
+//        userName = user.get(SessionManager.KEY_USERNAME);
 
         profile_username = (TextView) view.findViewById(R.id.toolbar_title);
-        profile_username.setText(username_profile);
+//        profile_username.setText(username_profile);
 
         ic_left = (ImageView) view.findViewById(R.id.icon_left);
         ic_left.setImageResource(R.drawable.ic_arrow_back_black_24dp);
@@ -92,7 +107,7 @@ public class UserProfileFragment extends Fragment {
 
         btn_follow = (Button) view.findViewById(R.id.profile_btn_follow);
 
-        if(username_profile.equals(userName)){
+       /* if(username_profile.equals(userName)){
             edit_btn.setVisibility(View.VISIBLE);
             btn_follow.setVisibility(View.GONE);
             edit_btn.setOnClickListener(new View.OnClickListener() {
@@ -103,10 +118,10 @@ public class UserProfileFragment extends Fragment {
             });
         }
         else
-        {
+        {*/
             edit_btn.setVisibility(View.GONE);
             btn_follow.setVisibility(View.VISIBLE);
-        }
+//        }
 
         total_post = (TextView) view.findViewById(R.id.total_posts);
         total_post_text = (TextView) view.findViewById(R.id.total_posts_text);
@@ -123,18 +138,18 @@ public class UserProfileFragment extends Fragment {
         profile_pp = (ImageView) view.findViewById(R.id.profile_photo);
         updateProfPic();
 
-        ViewPager viewPagerProfile = (ViewPager) view.findViewById(R.id.viewpager_profile);
-        viewPagerProfile.setVisibility(View.GONE);
+        viewPagerProfile = (ViewPager) view.findViewById(R.id.viewpager_profile);
+//        viewPagerProfile.setVisibility(View.GONE);
 
         tabLayoutProfile = (TabLayout) view.findViewById(R.id.sliding_tabs_profile);
 
-        if(loginDBAdapter.check_TBPosting().equals("EMPTY") || loginDBAdapter.check_TBPostingProfile(loginDBAdapter.getID(username_profile)).equals("NOT EXIST")) {
+        /*if(loginDBAdapter.check_TBPosting().equals("EMPTY") || loginDBAdapter.check_TBPostingProfile(loginDBAdapter.getID(username_profile)).equals("NOT EXIST")) {
             changefragment(new ProfileViewFragment(), "ProfileView");
             viewPagerProfile.setVisibility(view.GONE);
-/*
+*//*
             disable_tablayout();
             tabLayoutProfile.setSelectedTabIndicatorColor(0);
-            setupTabIcons();*/
+            setupTabIcons();*//*
         }
 
         else{
@@ -143,8 +158,7 @@ public class UserProfileFragment extends Fragment {
             args.putString("USERNAME", username_profile);
             utgf.setArguments(args);
             changefragment(utgf, "UserTabGrid");
-        }
-
+        }*/
     }
 
     private void setupTabIcons() {
@@ -168,7 +182,10 @@ public class UserProfileFragment extends Fragment {
             }
         });
 
-        if(loginDBAdapter.check_TBPosting().equals("EMPTY")){
+        /**
+         * !!DELETE
+         * */
+        /*if(loginDBAdapter.check_TBPosting().equals("EMPTY")){
 
             total_post.setEnabled(false);
 
@@ -251,36 +268,59 @@ public class UserProfileFragment extends Fragment {
 
                 total_followers_text.setEnabled(false);
             }
-        }
-
-        if(loginDBAdapter.isFollowing(loginDBAdapter.getID(userName),loginDBAdapter.getID(username_profile))) {
-            btn_follow.setText("Following");
-            btn_follow.setTextColor(Color.BLACK);
-            btn_follow.setBackgroundResource(R.drawable.btn_following);
-        }
-        else{
-            btn_follow.setText("Follow");
-            btn_follow.setTextColor(Color.WHITE);
-            btn_follow.setBackgroundResource(R.drawable.btn_follow);
-        }
+        }*/
 
         btn_follow.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-
-                if(!loginDBAdapter.isFollowing(loginDBAdapter.getID(userName),loginDBAdapter.getID(username_profile)))
+                String token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
+                if(user.getIsFollowing() == 0)
                     isButtonClicked = !isButtonClicked;
 
+                /** FOLLOW */
                 if(isButtonClicked){
-                    loginDBAdapter.insert_Follow(loginDBAdapter.getID(userName),loginDBAdapter.getID(username_profile),String.valueOf(System.currentTimeMillis()));
-                    loginDBAdapter.insert_Notif(loginDBAdapter.getUserProfPic(loginDBAdapter.getID(userName)),loginDBAdapter.getID(userName),"Follow",String.valueOf(System.currentTimeMillis()),0,loginDBAdapter.getID(username_profile));
+                    ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+                    Call<CResponse> call = apiRoute.follow(token, user.getUserName());
+                    call.enqueue(new Callback<CResponse>() {
+                        @Override
+                        public void onResponse(Call<CResponse> call, Response<CResponse> response) {
+                            CResponse data = response.body();
+
+                            if(data.isStatus()){
+                                user.setIsFollowing(1);
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<CResponse> call, Throwable t) {
+
+                        }
+                    });
+
                     btn_follow.setText("Following");
                     btn_follow.setTextColor(Color.BLACK);
                     v.setBackgroundResource(R.drawable.btn_following);
                 }
 
                 else{
-                    loginDBAdapter.delete_Following(loginDBAdapter.getID(username_profile));
+                    ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+                    Call<CResponse> call = apiRoute.unFollow(token, user.getUserName());
+                    call.enqueue(new Callback<CResponse>() {
+                        @Override
+                        public void onResponse(Call<CResponse> call, Response<CResponse> response) {
+                            CResponse data = response.body();
+
+                            if(data.isStatus()){
+                                user.setIsFollowing(0);
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<CResponse> call, Throwable t) {
+
+                        }
+                    });
+
                     btn_follow.setText("Follow");
                     btn_follow.setTextColor(Color.WHITE);
                     v.setBackgroundResource(R.drawable.btn_follow);
@@ -295,7 +335,163 @@ public class UserProfileFragment extends Fragment {
     }
 
     private void updateProfPic(){
-        if(loginDBAdapter.checkProfPic(loginDBAdapter.getID(username_profile))!=null){
+        final String token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
+
+        ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+        Call<UserProfileSearchResponse> call = apiRoute.GetSearchUserProfile(token, username_profile);
+        call.enqueue(new Callback<UserProfileSearchResponse>() {
+            @Override
+            public void onResponse(Call<UserProfileSearchResponse> call, Response<UserProfileSearchResponse> response) {
+                final UserProfileSearchResponse data = response.body();
+
+                if(data.isStatus()){
+                    user = data.getData();
+                    profile_username.setText(user.getUserName());
+                    if(user.getImagePath() != ""){
+                        Picasso
+                                .with(getContext())
+                                .load(ApiRetrofit.URL + data.getData().getImagePath())
+                                .resize(dpToPx(80), dpToPx(80))
+                                .centerCrop()
+                                .into(profile_pp);
+                    }
+                    else{
+                        profile_pp.setImageResource(R.drawable.ic_account_circle_black_128dp);
+                    }
+
+                    /**
+                     * User TOTAL POST
+                     */
+                    if(user.getTotalPosts() == 0){
+
+                        total_post.setEnabled(false);
+
+                        total_post_text.setEnabled(false);
+                    }
+                    else{
+                        total_post.setText(String.valueOf(user.getTotalPosts()));
+
+                        if(user.getTotalPosts()>1)
+                            total_post_text.setText("posts");
+
+                        else
+                            total_post_text.setText("post");
+                    }
+
+                    /**
+                     * User FOLLOWER
+                     */
+                    if(user.getTotalFollowers() == 0)
+                    {
+                        total_followers.setEnabled(false);
+                        total_followers_text.setEnabled(false);
+                    }
+                    else{
+
+                        total_followers.setEnabled(true);
+
+                        String totalFollowers = "" + user.getTotalFollowers();
+                        total_followers.setText(totalFollowers);
+
+                        total_followers.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                ((MainActivity) getActivity()).addfragment(FollowersFragment.newInstance(data.getData().getToken()), "Followers");
+                            }
+                        });
+
+                        total_followers_text.setEnabled(true);
+
+                        total_followers_text.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                ((MainActivity) getActivity()).addfragment(FollowersFragment.newInstance(data.getData().getToken()), "Followers");
+                            }
+                        });
+                    }
+
+                    if(user.getTotalFollowing() == 0){
+                        total_following.setEnabled(false);
+                        total_following_text.setEnabled(false);
+                    }
+                    else{
+                        total_following.setEnabled(true);
+
+                        String totalFollowing = "" + user.getTotalFollowing();
+                        total_following.setText(totalFollowing);
+
+                        total_following.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                ((MainActivity) getActivity()).addfragment(FollowingFragment.newInstance(data.getData().getToken()), "Following");
+                            }
+                        });
+
+                        total_following_text.setEnabled(true);
+
+                        total_following_text.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                ((MainActivity) getActivity()).addfragment(FollowingFragment.newInstance(data.getData().getToken()), "Following");
+                            }
+                        });
+                    }
+
+                    if(user.getIsFollowing() == 1) {
+                        btn_follow.setText("Following");
+                        btn_follow.setTextColor(Color.BLACK);
+                        btn_follow.setBackgroundResource(R.drawable.btn_following);
+                    }
+                    else{
+                        btn_follow.setText("Follow");
+                        btn_follow.setTextColor(Color.WHITE);
+                        btn_follow.setBackgroundResource(R.drawable.btn_follow);
+                    }
+
+                    Log.d("tes_post", user.getToken());
+
+
+                            if(user.getTotalPosts() >0){
+                                viewPagerProfile.setAdapter(new ProfileVPAdapter(getChildFragmentManager(), user.getToken()));
+                                tabLayoutProfile.setupWithViewPager(viewPagerProfile);
+                                setupTabIcons();
+                            }
+                            else{
+                                changefragment(new ProfileViewFragment(), "ProfileView");
+                                viewPagerProfile.setVisibility(View.GONE);
+                                Log.e("user post", data.getMessage());
+                            }
+
+                            /*if(data.isStatus()){
+                                UserTabGridFragment utgf = new UserTabGridFragment();
+                                final Bundle args = new Bundle();
+                                args.putString("USERNAME", user.getToken());
+                                utgf.setArguments(args);
+                                changefragment(utgf, "UserTabGrid");
+                            }
+                            else{
+                                changefragment(new ProfileViewFragment(), "ProfileView");
+                                viewPagerProfile.setVisibility(View.GONE);
+                                tabLayoutProfile.setSelectedTabIndicatorColor(0);
+                                setupTabIcons();
+                                Log.e("user post", data.getMessage());
+                            }*/
+
+
+                }
+                else{
+                    Log.d("Error", data.getMessage());
+                    profile_pp.setImageResource(R.drawable.ic_account_circle_black_128dp);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UserProfileSearchResponse> call, Throwable t) {
+                Log.e("ERR", String.valueOf(t.getMessage()));                profile_pp.setImageResource(R.drawable.ic_account_circle_black_128dp);
+            }
+        });
+
+        /*if(loginDBAdapter.checkProfPic(loginDBAdapter.getID(username_profile))!=null){
             Picasso
                     .with(getContext())
                     .load(new File(loginDBAdapter.getUserProfPic(loginDBAdapter.getID(username_profile))))
@@ -305,6 +501,6 @@ public class UserProfileFragment extends Fragment {
                     .into(profile_pp);
         }
         else
-            profile_pp.setImageResource(R.drawable.ic_account_circle_black_128dp);
+            profile_pp.setImageResource(R.drawable.ic_account_circle_black_128dp);*/
     }
 }

@@ -15,10 +15,17 @@ import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.NotifTabFollowingRVAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.NotifTabYouRVAdapter;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
+import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
+import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.response.NotifResponse;
 import com.nshmura.snappysmoothscroller.SnapType;
 import com.nshmura.snappysmoothscroller.SnappyLinearLayoutManager;
 
 import java.util.HashMap;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by Chyntia on 5/20/2017.
@@ -28,7 +35,7 @@ public class TabFollowingFragment extends Fragment {
     public static final String ARG_PAGE = "ARG_PAGE";
     RecyclerView rv;
     Toolbar toolbar;
-    LoginDBAdapter loginDBAdapter;
+//    LoginDBAdapter loginDBAdapter;
     SessionManager session;
     String userName;
 
@@ -64,9 +71,6 @@ public class TabFollowingFragment extends Fragment {
 
     private void init(View v) {
 
-        loginDBAdapter = new LoginDBAdapter(getContext());
-        loginDBAdapter = loginDBAdapter.open();
-
         session = new SessionManager(getContext());
         HashMap<String, String> user = session.getUserDetails();
 
@@ -77,23 +81,36 @@ public class TabFollowingFragment extends Fragment {
     }
 
     private void setupRV(){
+        String token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
+        ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+        Call<NotifResponse> call = apiRoute.getNotifFollowing(token);
+        call.enqueue(new Callback<NotifResponse>() {
+            @Override
+            public void onResponse(Call<NotifResponse> call, Response<NotifResponse> response) {
+                NotifResponse data = response.body();
 
-        if(loginDBAdapter.check_TBNotif().equals("EMPTY") || loginDBAdapter.check_TBNotifFollowing(loginDBAdapter.getID(userName)) == 0){
-            changefragment(new TabFollowingViewFragment(), "TabFollowingView");
-            rv.setVisibility(View.GONE);
-        }
+                if(data.isStatus()){
 
-        else{
-            NotifTabFollowingRVAdapter adapter = new NotifTabFollowingRVAdapter(loginDBAdapter.getAllNotif(loginDBAdapter.getID(userName)), getActivity().getApplication());
-            rv.setAdapter(adapter);
-            rv.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
-            /*
-            SnappyLinearLayoutManager layoutManager = new SnappyLinearLayoutManager(getActivity().getApplicationContext());
-            layoutManager.setSnapType(SnapType.CENTER);
-            layoutManager.setSnapInterpolator(new DecelerateInterpolator());
-            rv.setLayoutManager(layoutManager);
-            rv.smoothScrollToPosition(0);*/
-        }
+                    NotifTabFollowingRVAdapter adapter = new NotifTabFollowingRVAdapter(data.getData(), getActivity().getApplication());
+                    rv.setAdapter(adapter);
+                    rv.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
+                }
+                else{
+                    changefragment(new TabFollowingViewFragment(), "TabFollowingView");
+                    rv.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<NotifResponse> call, Throwable t) {
+                changefragment(new TabFollowingViewFragment(), "TabFollowingView");
+                rv.setVisibility(View.GONE);
+            }
+        });
+
+
+
+
     }
 
     public void changefragment(Fragment fragment, String tag) {

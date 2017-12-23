@@ -13,6 +13,7 @@ import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.text.method.ArrowKeyMovementMethod;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -30,9 +31,19 @@ import com.example.chyntia.simulasi_ig.view.activity.MainActivity;
 import com.example.chyntia.simulasi_ig.view.adapter.FollowersRVAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.SearchRVAdapter;
+import com.example.chyntia.simulasi_ig.view.model.entity.User;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
+import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
+import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.response.SearchResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.UserResponse;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by Chyntia on 5/23/2017.
@@ -140,29 +151,39 @@ public class SearchFragment extends Fragment {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                    edit_text.clearFocus();
-                    hideKeyboard(getContext());
-                    setupRV(edit_text.getText().toString());
+                    String token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
+                    ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+                    Call<SearchResponse> call = apiRoute.searchUser(token, edit_text.getText().toString());
+                    call.enqueue(new Callback<SearchResponse>() {
+                        @Override
+                        public void onResponse(Call<SearchResponse> call, Response<SearchResponse> response) {
+                            edit_text.clearFocus();
+                            hideKeyboard(getContext());
+
+                            SearchResponse data = response.body();
+                            if(data.isStatus()){
+                                ArrayList<User> _users = data.getData();
+                                SearchRVAdapter adapter = new SearchRVAdapter(_users, getActivity().getApplication());
+                                rv.setAdapter(adapter);
+                                rv.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
+                            }
+                            else{
+                                rv.setVisibility(View.GONE);
+                                tv_userNotFound.setVisibility(View.VISIBLE);
+                            }
+                            Log.d("Search Error", data.getMessage());
+                        }
+
+                        @Override
+                        public void onFailure(Call<SearchResponse> call, Throwable t) {
+                            Log.e("ERR", String.valueOf(t.getMessage()));                        }
+                    });
+
                     return true;
                 }
                 return false;
             }
         });
-    }
-
-    private void setupRV(String text){
-
-        if(!loginDBAdapter.isExist(text)){
-            rv.setVisibility(View.GONE);
-            tv_userNotFound.setVisibility(View.VISIBLE);
-        }
-
-        else {
-            SearchRVAdapter adapter = new SearchRVAdapter(loginDBAdapter.search(text), getActivity().getApplication());
-            rv.setAdapter(adapter);
-            rv.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
-        }
-
     }
 
     public void showInputMethod() {

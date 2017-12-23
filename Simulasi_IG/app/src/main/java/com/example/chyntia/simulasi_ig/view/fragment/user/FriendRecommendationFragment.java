@@ -1,5 +1,6 @@
 package com.example.chyntia.simulasi_ig.view.fragment.user;
 
+import android.content.pm.PackageInstaller;
 import android.os.Bundle;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
@@ -17,8 +18,16 @@ import com.example.chyntia.simulasi_ig.view.activity.MainActivity;
 import com.example.chyntia.simulasi_ig.view.adapter.FriendRecommendationRVAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
+import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
+import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.response.UserFollowResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.UserProfileResponse;
 
 import java.util.HashMap;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by Chyntia on 5/24/2017.
@@ -30,7 +39,7 @@ public class FriendRecommendationFragment extends Fragment {
     ImageView ic_left,ic_right;
     RecyclerView rv;
     Button btn;
-    LoginDBAdapter loginDBAdapter;
+//    LoginDBAdapter loginDBAdapter;
     SessionManager session;
     String userName;
 
@@ -52,9 +61,6 @@ public class FriendRecommendationFragment extends Fragment {
 
     private void init(View view) {
 
-        loginDBAdapter = new LoginDBAdapter(getContext());
-        loginDBAdapter = loginDBAdapter.open();
-
         session = new SessionManager(getContext());
         HashMap<String, String> user = session.getUserDetails();
 
@@ -75,11 +81,26 @@ public class FriendRecommendationFragment extends Fragment {
     }
 
     private void setupRV(){
+        String token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
+        ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+        Call<UserFollowResponse> call = apiRoute.getRecommendation(token);
+        call.enqueue(new Callback<UserFollowResponse>() {
+            @Override
+            public void onResponse(Call<UserFollowResponse> call, Response<UserFollowResponse> response) {
+                UserFollowResponse data = response.body();
 
-        FriendRecommendationRVAdapter adapter = new FriendRecommendationRVAdapter(loginDBAdapter.getUserRecommendation(loginDBAdapter.getID(userName)), getActivity().getApplication());
-        rv.setAdapter(adapter);
-        rv.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
+                if(data.isStatus()){
+                    FriendRecommendationRVAdapter adapter = new FriendRecommendationRVAdapter(data.getData(), getActivity().getApplication());
+                    rv.setAdapter(adapter);
+                    rv.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
+                }
+            }
 
+            @Override
+            public void onFailure(Call<UserFollowResponse> call, Throwable t) {
+
+            }
+        });
     }
 
     private void event() {

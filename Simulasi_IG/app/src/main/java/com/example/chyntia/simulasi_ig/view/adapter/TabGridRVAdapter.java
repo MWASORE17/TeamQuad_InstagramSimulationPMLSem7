@@ -12,11 +12,11 @@ import com.example.chyntia.simulasi_ig.R;
 import com.example.chyntia.simulasi_ig.view.activity.MainActivity;
 import com.example.chyntia.simulasi_ig.view.fragment.user.PhotoDetailFragment;
 import com.example.chyntia.simulasi_ig.view.model.entity.Data_Follow;
-import com.example.chyntia.simulasi_ig.view.model.entity.Data_Posting_Grid;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
+import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
+import com.example.chyntia.simulasi_ig.view.network.model.PostDetail;
 import com.squareup.picasso.Picasso;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 
@@ -25,14 +25,14 @@ import java.util.List;
  */
 
 public class TabGridRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    List<Data_Posting_Grid> user;
+    List<PostDetail> user;
     Context context;
     private boolean isButtonClicked = false;
-    LoginDBAdapter loginDBAdapter;
+//    LoginDBAdapter loginDBAdapter;
     SessionManager session;
     String userName;
 
-    public TabGridRVAdapter(List<Data_Posting_Grid> user, Context context) {
+    public TabGridRVAdapter(List<PostDetail> user, Context context) {
         this.user = user;
         this.context = context;
     }
@@ -41,9 +41,6 @@ public class TabGridRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         //Inflate the layout, initialize the View Holder
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.custom_item_grid_profile, parent, false);
-
-        loginDBAdapter = new LoginDBAdapter(context);
-        loginDBAdapter = loginDBAdapter.open();
 
         session = new SessionManager(context);
         HashMap<String, String> user = session.getUserDetails();
@@ -56,21 +53,19 @@ public class TabGridRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder,int position) {
         final TabGridRVAdapter.ViewHolder _holder = (TabGridRVAdapter.ViewHolder) holder;
-        final Data_Posting_Grid _user = this.user.get(position);
+        final PostDetail _user = this.user.get(position);
         //Use the provided View Holder on the onCreateViewHolder method to populate the current row on the RecyclerView
 
         Picasso
                 .with(context)
-                .load(new File(_user.img_path))
-                .resize(dpToPx(20), dpToPx(20))
-                .centerCrop()
+                .load(ApiRetrofit.URL + _user.getImagePath())
                 .error(R.drawable.ic_account_circle_black_24dp)
                 .into(_holder.photo);
 
         _holder.photo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int position = _user.posting_id;
+                int position = _user.getPostID();
                 PhotoDetailFragment pdf = new PhotoDetailFragment();
                 final Bundle args = new Bundle();
                 args.putInt("POSITION", position);
@@ -99,7 +94,7 @@ public class TabGridRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
     // Insert a new item to the RecyclerView on a predefined position
-    public void insert(int position, Data_Posting_Grid data) {
+    public void insert(int position, PostDetail data) {
         user.add(position, data);
         notifyItemInserted(position);
     }

@@ -9,7 +9,6 @@ import android.database.sqlite.SQLiteDatabase;
 import com.example.chyntia.simulasi_ig.view.Database.DatabaseHelper;
 import com.example.chyntia.simulasi_ig.view.model.entity.Data_Follow;
 import com.example.chyntia.simulasi_ig.view.model.entity.Data_Posting_Grid;
-import com.example.chyntia.simulasi_ig.view.model.entity.Data_Comments;
 import com.example.chyntia.simulasi_ig.view.model.entity.Data_Likes;
 import com.example.chyntia.simulasi_ig.view.model.entity.Data_Notif;
 import com.example.chyntia.simulasi_ig.view.model.entity.Data_TL;
@@ -680,15 +679,15 @@ public class LoginDBAdapter {
 
     }
 
-    public List<Data_Comments> getAllComments(int posting_id){
+    /*public List<Comment> getAllComments(int posting_id){
 
         String where="ID_POST = "+posting_id;
 
         Cursor cursor=db.query("TB_COMMENTS", null, where, null, null, null, null);
 
-        List<Data_Comments> list = new ArrayList<>();
+        List<Comment> list = new ArrayList<>();
 
-        Data_Comments _data = null;
+        Comment _data = null;
 
         while (cursor.moveToNext()){
 
@@ -697,7 +696,7 @@ public class LoginDBAdapter {
             String comments_content = cursor.getString(cursor.getColumnIndex("Comments_content"));
             String created_at = cursor.getString(cursor.getColumnIndex("Created_at"));
 
-            _data = new Data_Comments(getUserProfPic(id),getUserName(id),comments_content,created_at);
+            _data = new Comment(getUserProfPic(id),getUserName(id),comments_content,created_at);
 
             list.add(_data);
 
@@ -706,7 +705,7 @@ public class LoginDBAdapter {
         cursor.close();
 
         return list;
-    }
+    }*/
 
     public String check_TBComments(){
 

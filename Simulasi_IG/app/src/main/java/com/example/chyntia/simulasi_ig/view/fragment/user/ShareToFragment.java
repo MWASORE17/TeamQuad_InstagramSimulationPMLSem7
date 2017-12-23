@@ -165,8 +165,7 @@ public class ShareToFragment extends Fragment {
 
                     @Override
                     public void onFailure(Call<CResponse> call, Throwable t) {
-                        Log.d("Error", t.getMessage());
-                    }
+                        Log.e("ERR", String.valueOf(t.getMessage()));                    }
                 });
 
                 //PrettyTime p = new PrettyTime();

@@ -12,32 +12,48 @@ import android.widget.TextView;
 
 import com.example.chyntia.simulasi_ig.R;
 import com.example.chyntia.simulasi_ig.view.model.entity.Data_Notif;
+import com.example.chyntia.simulasi_ig.view.model.entity.User;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
+import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
+import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.model.Notif;
+import com.example.chyntia.simulasi_ig.view.network.response.CResponse;
+import com.example.chyntia.simulasi_ig.view.utilities.DatetimeUtils;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import static com.example.chyntia.simulasi_ig.R.drawable.btn_follow;
 
 /**
  * Created by Chyntia on 6/18/2017.
  */
 
 public class NotifTabYouRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    List<Data_Notif> user;
+    List<Notif> user;
     Context context;
     private boolean isButtonClicked = false;
-    LoginDBAdapter loginDBAdapter;
+//    LoginDBAdapter loginDBAdapter;
     SessionManager session;
     String userName;
     private static final int SECOND_MILLIS = 1000;
     private static final int MINUTE_MILLIS = 60 * SECOND_MILLIS;
     private static final int HOUR_MILLIS = 60 * MINUTE_MILLIS;
     private static final int DAY_MILLIS = 24 * HOUR_MILLIS;
+    String token;
 
-    public NotifTabYouRVAdapter(List<Data_Notif> user, Context context) {
+    public NotifTabYouRVAdapter(List<Notif> user, Context context) {
         this.user = user;
         this.context = context;
+        session = new SessionManager(context);
+        this.token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
     }
 
     @Override
@@ -45,10 +61,7 @@ public class NotifTabYouRVAdapter extends RecyclerView.Adapter<RecyclerView.View
         //Inflate the layout, initialize the View Holder
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.custom_notification_tab_you, parent, false);
 
-        loginDBAdapter = new LoginDBAdapter(context);
-        loginDBAdapter = loginDBAdapter.open();
 
-        session = new SessionManager(context);
         HashMap<String, String> user = session.getUserDetails();
 
         userName = user.get(SessionManager.KEY_USERNAME);
@@ -59,68 +72,97 @@ public class NotifTabYouRVAdapter extends RecyclerView.Adapter<RecyclerView.View
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         final NotifTabYouRVAdapter.ViewHolder _holder = (NotifTabYouRVAdapter.ViewHolder) holder;
-        final Data_Notif _user = this.user.get(position);
+        final Notif _user = this.user.get(position);
         //Use the provided View Holder on the onCreateViewHolder method to populate the current row on the RecyclerView
         _holder.nama.setVisibility(View.GONE);
 
-        if(_user.user_id == loginDBAdapter.getID(userName)) {
+       /* if(_user.user_id == loginDBAdapter.getID(userName)) {
             _holder.content.setVisibility(View.GONE);
             _holder.created_at.setVisibility(View.GONE);
             _holder.pp.setVisibility(View.GONE);
         }
-        else {
-            if (_user.content_type.equals("Follow")) {
-                _holder.content.setText(loginDBAdapter.getUserName(_user.user_id) + " started following\nyou");
+        else {*/
+            if (_user.getType().equals("follow")) {
+                _holder.content.setText(_user.getUserName() + " started following\nyou");
                 _holder.btn.setVisibility(View.VISIBLE);
 
-                if (loginDBAdapter.isFollowing(loginDBAdapter.getID(userName), _user.user_id)) {
+                if (_user.getIsFollowing() == 1) {
                     _holder.btn.setText("Following");
                     _holder.btn.setTextColor(Color.BLACK);
                     _holder.btn.setBackgroundResource(R.drawable.btn_following);
                 } else {
                     _holder.btn.setText("Follow");
                     _holder.btn.setTextColor(Color.WHITE);
-                    _holder.btn.setBackgroundResource(R.drawable.btn_follow);
+                    _holder.btn.setBackgroundResource(btn_follow);
                 }
 
                 _holder.btn.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
 
-                        if (!loginDBAdapter.isFollowing(loginDBAdapter.getID(userName), _user.user_id))
+                        if (_user.getIsFollowing() == 0)
                             isButtonClicked = !isButtonClicked;
 
-                        if (isButtonClicked) {
-                            loginDBAdapter.insert_Follow(loginDBAdapter.getID(userName), loginDBAdapter.getID(_holder.nama.getText().toString()), String.valueOf(System.currentTimeMillis()));
-                            loginDBAdapter.insert_Notif(loginDBAdapter.getUserProfPic(loginDBAdapter.getID(userName)), loginDBAdapter.getID(userName), "Follow", String.valueOf(System.currentTimeMillis()), 0, loginDBAdapter.getID(_holder.nama.getText().toString()));
+                        /** FOLLOW */
+                        if(isButtonClicked){
+                            ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+                            Call<CResponse> call = apiRoute.follow(token, _user.getUserName());
+                            call.enqueue(new Callback<CResponse>() {
+                                @Override
+                                public void onResponse(Call<CResponse> call, Response<CResponse> response) {
+                                    CResponse data = response.body();
+
+                                }
+
+                                @Override
+                                public void onFailure(Call<CResponse> call, Throwable t) {
+
+                                }
+                            });
+
                             _holder.btn.setText("Following");
                             _holder.btn.setTextColor(Color.BLACK);
                             v.setBackgroundResource(R.drawable.btn_following);
-                        } else {
-                            loginDBAdapter.delete_Following(loginDBAdapter.getID(_holder.nama.getText().toString()));
-                            _holder.btn.setText("Follow");
-                            _holder.btn.setTextColor(Color.WHITE);
-                            v.setBackgroundResource(R.drawable.btn_follow);
                         }
 
+                        else{
+                            ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+                            Call<CResponse> call = apiRoute.unFollow(token, _user.getUserName());
+                            call.enqueue(new Callback<CResponse>() {
+                                @Override
+                                public void onResponse(Call<CResponse> call, Response<CResponse> response) {
+                                    CResponse data = response.body();
+
+                                }
+
+                                @Override
+                                public void onFailure(Call<CResponse> call, Throwable t) {
+
+                                }
+                            });
+
+                            _holder.btn.setText("Follow");
+                            _holder.btn.setTextColor(Color.WHITE);
+                            v.setBackgroundResource(btn_follow);
+                        }
                     }
                 });
-            } else if (_user.content_type.equals("Like") && _user.user_id != loginDBAdapter.getID(userName)) {
-                _holder.content.setText(loginDBAdapter.getUserName(_user.user_id) + " liked your post");
+            } else if (_user.getType().equals("like")) {
+                _holder.content.setText(_user.getUserName() + " liked your post");
                 _holder.photo.setVisibility(View.VISIBLE);
                 Picasso
                         .with(context)
-                        .load(new File(loginDBAdapter.getPhoto(_user.id_post)))
+                        .load(ApiRetrofit.URL + _user.getImagePath())
                         .resize(dpToPx(40), dpToPx(40))
                         .centerCrop()
                         .error(R.drawable.ic_account_circle_black_24dp)
                         .into(_holder.photo);
-            } else if (_user.content_type.equals("Comment") && _user.user_id != loginDBAdapter.getID(userName)) {
-                _holder.content.setText(loginDBAdapter.getUserName(_user.user_id) + " commented on your post");
+            } else if (_user.getType().equals("comment")) {
+                _holder.content.setText(_user.getUserName() + " commented on your post");
                 _holder.photo.setVisibility(View.VISIBLE);
                 Picasso
                         .with(context)
-                        .load(new File(loginDBAdapter.getPhoto(_user.id_post)))
+                        .load(ApiRetrofit.URL + _user.getImagePath())
                         .resize(dpToPx(40), dpToPx(40))
                         .centerCrop()
                         .error(R.drawable.ic_account_circle_black_24dp)
@@ -128,56 +170,22 @@ public class NotifTabYouRVAdapter extends RecyclerView.Adapter<RecyclerView.View
             }
 
 
-            if (loginDBAdapter.checkProfPic(_user.user_id) != null && _user.user_id != loginDBAdapter.getID(userName)) {
+            if (_user.getImagePath() != "") {
                 Picasso
                         .with(context)
-                        .load(new File(_user.profPic))
+                        .load(ApiRetrofit.URL + _user.getUserImage())
                         .resize(dpToPx(20), dpToPx(20))
                         .centerCrop()
                         .error(R.drawable.ic_account_circle_black_24dp)
                         .into(_holder.pp);
             } else
                 _holder.pp.setImageResource(R.drawable.ic_account_circle_black_24dp);
-
-
-    /*
-            _holder.btn.setText(_user.status);
-            if(_user.status == "Follow"){
-                _holder.btn.setTextColor(Color.WHITE);
-                _holder.btn.setBackgroundResource(R.drawable.btn_follow);
-            }
-            else{
-                _holder.btn.setTextColor(Color.BLACK);
-                _holder.btn.setBackgroundResource(R.drawable.btn_following);
-            }
-
-            _holder.btn.setOnClickListener(new View.OnClickListener(){
-                @Override
-                public void onClick(View v) {
-
-                    if(_user.status == "Follow")
-                        isButtonClicked = !isButtonClicked;
-
-                    if(isButtonClicked){
-                        loginDBAdapter.insert_Follow(loginDBAdapter.getID(userName),loginDBAdapter.getID(_holder.nama.getText().toString()),String.valueOf(System.currentTimeMillis()));
-                        _holder.btn.setText("Following");
-                        _holder.btn.setTextColor(Color.BLACK);
-                        v.setBackgroundResource(R.drawable.btn_following);
-                    }
-
-                    else{
-                        loginDBAdapter.delete_Following(loginDBAdapter.getID(_holder.nama.getText().toString()));
-                        _holder.btn.setText("Follow");
-                        _holder.btn.setTextColor(Color.WHITE);
-                        v.setBackgroundResource(R.drawable.btn_follow);
-                    }
-
-                }
-            });*/
-            //animate(holder);
-
-            _holder.created_at.setText(getTimeAgo(Long.parseLong(_user.created_at)));
+        try {
+            _holder.created_at.setText(getTimeAgo(DatetimeUtils.stringToDate(_user.getCreated_on()).getTime()));
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
+        /*}*/
     }
 
     private int dpToPx(int dp)
@@ -185,18 +193,6 @@ public class NotifTabYouRVAdapter extends RecyclerView.Adapter<RecyclerView.View
         float density = context.getResources().getDisplayMetrics().density;
         return Math.round((float)dp * density);
     }
-/*
-    public void follow_states(View v, FollowersRVAdapter.ViewHolder _holder, Data_Follow){
-        if (v.getId() == R.id.btn) {
-            isButtonClicked = !isButtonClicked; // toggle the boolean flag
-
-            _holder.btn.setText(_user);
-            /*
-            _holder.btn.setText(isButtonClicked ? "Following" : "Follow");
-            _holder.btn.setTextColor(isButtonClicked ? Color.BLACK : Color.WHITE);
-            v.setBackgroundResource(isButtonClicked ? R.drawable.btn_following : R.drawable.btn_follow);
-        }
-    }*/
 
     @Override
     public int getItemCount() {
@@ -210,7 +206,7 @@ public class NotifTabYouRVAdapter extends RecyclerView.Adapter<RecyclerView.View
     }
 
     // Insert a new item to the RecyclerView on a predefined position
-    public void insert(int position, Data_Notif data) {
+    public void insert(int position, Notif data) {
         user.add(position, data);
         notifyItemInserted(position);
     }

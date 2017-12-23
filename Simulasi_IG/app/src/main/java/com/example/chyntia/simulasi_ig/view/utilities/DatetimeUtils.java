@@ -16,4 +16,10 @@ public class DatetimeUtils {
         Date date = sdf.parse(dateInString);
         return date;
     }
+
+    public static String dateToString(Date tanggal) throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd HH:mm:ss");
+        String date = sdf.format(tanggal);
+        return date;
+    }
 }

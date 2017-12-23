@@ -4,6 +4,7 @@ import android.content.Context;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.util.Log;
 
 import com.example.chyntia.simulasi_ig.R;
 import com.example.chyntia.simulasi_ig.view.fragment.user.TabDetailFragment;
@@ -18,9 +19,15 @@ import com.example.chyntia.simulasi_ig.view.fragment.user.TabYouFragment;
 public class ProfileVPAdapter extends FragmentPagerAdapter {
     final int PAGE_COUNT = 2;
     private Context context;
+    private String token;
 
     public ProfileVPAdapter(FragmentManager fm) {
         super(fm);
+    }
+
+    public ProfileVPAdapter(FragmentManager fm, String token) {
+        super(fm);
+        this.token = token;
     }
 
     // Returns total number of pages
@@ -34,9 +41,10 @@ public class ProfileVPAdapter extends FragmentPagerAdapter {
     public Fragment getItem(int position) {
         switch(position){
             case 0:
-                return new TabGridFragment();
+                Log.i("tes_post2", "case 0" + token);
+                return TabGridFragment.newInstance(token);
             case 1:
-                return new TabDetailFragment();
+                return TabDetailFragment.newInstance(token);
             default:
                 return null;
         }

@@ -10,11 +10,14 @@ import android.widget.TextView;
 
 import com.example.chyntia.simulasi_ig.R;
 import com.example.chyntia.simulasi_ig.view.model.entity.Data_Follow;
-import com.example.chyntia.simulasi_ig.view.model.entity.Data_Comments;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
+import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
+import com.example.chyntia.simulasi_ig.view.network.model.Comment;
+import com.example.chyntia.simulasi_ig.view.utilities.DatetimeUtils;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -23,14 +26,14 @@ import java.util.List;
  */
 
 public class UserCommentRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    List<Data_Comments> user;
+    List<Comment> user;
     Context context;
     private boolean isButtonClicked = false;
-    LoginDBAdapter loginDBAdapter;
+//    LoginDBAdapter loginDBAdapter;
     SessionManager session;
     String userName;
 
-    public UserCommentRVAdapter(List<Data_Comments> user, Context context) {
+    public UserCommentRVAdapter(List<Comment> user, Context context) {
         this.user = user;
         this.context = context;
     }
@@ -40,8 +43,6 @@ public class UserCommentRVAdapter extends RecyclerView.Adapter<RecyclerView.View
         //Inflate the layout, initialize the View Holder
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.custom_row_comment, parent, false);
 
-        loginDBAdapter = new LoginDBAdapter(context);
-        loginDBAdapter = loginDBAdapter.open();
 
         session = new SessionManager(context);
         HashMap<String, String> user = session.getUserDetails();
@@ -54,14 +55,14 @@ public class UserCommentRVAdapter extends RecyclerView.Adapter<RecyclerView.View
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder,int position) {
         final UserCommentRVAdapter.ViewHolder _holder = (UserCommentRVAdapter.ViewHolder) holder;
-        final Data_Comments _user = this.user.get(position);
+        final Comment _user = this.user.get(position);
         //Use the provided View Holder on the onCreateViewHolder method to populate the current row on the RecyclerView
-        _holder.nama.setText(_user.username_comments);
+        _holder.nama.setText(_user.getUsername());
 
-        if(loginDBAdapter.checkProfPic(loginDBAdapter.getID(_user.username_comments))!=null){
+        if(_user.getContent() != ""){
             Picasso
                     .with(context)
-                    .load(new File(_user.profPic))
+                    .load(ApiRetrofit.URL + _user.getUser_image())
                     .resize(dpToPx(20), dpToPx(20))
                     .centerCrop()
                     .error(R.drawable.ic_account_circle_black_24dp)
@@ -70,8 +71,12 @@ public class UserCommentRVAdapter extends RecyclerView.Adapter<RecyclerView.View
         else
             _holder.pp.setImageResource(R.drawable.ic_account_circle_black_24dp);
 
-        _holder.created_at.setText(HomeRVAdapter.getTimeAgo(Long.parseLong(_user.created_at)));
-        _holder.comments_content.setText(_user.comments_content);
+        try {
+            _holder.created_at.setText(HomeRVAdapter.getTimeAgo(DatetimeUtils.stringToDate(_user.getCreated_on()).getTime()));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        _holder.comments_content.setText(_user.getContent());
         //animate(holder);
     }
 
@@ -92,8 +97,13 @@ public class UserCommentRVAdapter extends RecyclerView.Adapter<RecyclerView.View
         super.onAttachedToRecyclerView(recyclerView);
     }
 
+    public void add(Comment data){
+        user.add(data);
+        notifyDataSetChanged();
+    }
+
     // Insert a new item to the RecyclerView on a predefined position
-    public void insert(int position, Data_Comments data) {
+    public void insert(int position, Comment data) {
         user.add(position, data);
         notifyItemInserted(position);
     }

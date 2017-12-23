@@ -4,16 +4,25 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.chyntia.simulasi_ig.R;
 import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
+import com.example.chyntia.simulasi_ig.view.adapter.ProfileVPAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.TabGridRVAdapter;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
+import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
+import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.response.PostsResponse;
 
 import java.util.HashMap;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by Chyntia on 5/26/2017.
@@ -23,28 +32,30 @@ public class TabGridFragment extends Fragment{
     public static final String ARG_PAGE = "ARG_PAGE";
     RecyclerView rv;
     SessionManager session;
-    LoginDBAdapter loginDBAdapter;
+//    LoginDBAdapter loginDBAdapter;
     String userName;
+    String token;
 
     public TabGridFragment() {
         // Required empty public constructor
     }
 
-    public static TabGridFragment newInstance() {
-
-        return new TabGridFragment();
+    public static TabGridFragment newInstance(String token) {
+        TabGridFragment utgf = new TabGridFragment();
+        Bundle args = new Bundle();
+        args.putString("USERNAME", token);
+        utgf.setArguments(args);
+        Log.i("tes_post2", "new Instance" + token);
+        return utgf;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        loginDBAdapter = new LoginDBAdapter(getContext());
-        loginDBAdapter = loginDBAdapter.open();
-
+        token = getArguments().getString("USERNAME");
         session = new SessionManager(getContext());
         HashMap<String, String> user = session.getUserDetails();
-
+        Log.d("tes_post2", "on Create" + token);
         // name
         userName = user.get(SessionManager.KEY_USERNAME);
     }
@@ -67,21 +78,29 @@ public class TabGridFragment extends Fragment{
     }
 
     private void setupRV(){
+        Log.d("tes_post2", "Setup RV" + token);
 
-        TabGridRVAdapter adapter = new TabGridRVAdapter(loginDBAdapter.getPostingProfile(loginDBAdapter.getID(userName)), getActivity().getApplication());
-        rv.setAdapter(adapter);
-        rv.setLayoutManager(new GridLayoutManager(getContext(),3));
+        /** POST */
+        ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+        Call<PostsResponse> call = apiRoute.getAccountPosts(token);
+        call.enqueue(new Callback<PostsResponse>() {
+            @Override
+            public void onResponse(Call<PostsResponse> call, Response<PostsResponse> response) {
+                PostsResponse data = response.body();
+                Log.d("tes_post23", token);
+                if(data.isStatus()){
+                    TabGridRVAdapter adapter = new TabGridRVAdapter(data.getFeeds(), getActivity().getApplication());
+                    rv.setAdapter(adapter);
+                    rv.setLayoutManager(new GridLayoutManager(getContext(),3));
+                }
+                else{
+                    Log.e("user post", data.getMessage());
+                }
+            }
 
+            @Override
+            public void onFailure(Call<PostsResponse> call, Throwable t) {
+                Log.e("ERR", String.valueOf(t.getMessage()));            }
+        });
     }
-/*
-    public List<Data_Posting_Grid> fill_with_data() {
-
-        List<Data_Posting_Grid> data = new ArrayList<>();
-
-        data.add(new Data_Posting_Grid(1,"ONE"));
-        data.add(new Data_Posting_Grid(2,"TWO"));
-        data.add(new Data_Posting_Grid(3,"THREE"));
-
-        return data;
-    }*/
 }
