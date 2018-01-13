@@ -15,6 +15,7 @@ import android.widget.Toast;
 import com.example.chyntia.simulasi_ig.R;
 import com.example.chyntia.simulasi_ig.view.adapter.HomeRVAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
+import com.example.chyntia.simulasi_ig.view.enumeration.TransEnum;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
 import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
 import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
@@ -104,7 +105,7 @@ public class HomeFragment extends Fragment {
 
                 if(data.isStatus()){
                     if(data.getFeeds().size() > 0){
-                        HomeRVAdapter adapter = new HomeRVAdapter(data.getFeeds(), getActivity().getApplication());
+                        HomeRVAdapter adapter = new HomeRVAdapter(data.getFeeds(), getContext().getApplicationContext(), TransEnum.USER_IMAGE);
                         rv.setAdapter(adapter);
                         //rv.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
                         SnappyLinearLayoutManager layoutManager = new SnappyLinearLayoutManager(getActivity().getApplicationContext());
@@ -119,13 +120,15 @@ public class HomeFragment extends Fragment {
                     }
                 }
                 else{
-                    Toast.makeText(getContext(), "Could not refresh feed !" + data.getMessage(), Toast.LENGTH_LONG).show();
+                    /*Toast.makeText(getContext(), "Could not refresh feed !" + data.getMessage(), Toast.LENGTH_LONG).show();*/
+                    changefragment(new HomeViewFragment(), "HomeView");
+                    rv.setVisibility(View.GONE);
                 }
             }
 
             @Override
             public void onFailure(Call<PostsResponse> call, Throwable t) {
-                Toast.makeText(getContext(), "Could not refresh feed !", Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), "Could not refresh feed !" + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }

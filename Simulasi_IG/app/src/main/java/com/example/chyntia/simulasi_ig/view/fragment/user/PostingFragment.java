@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -134,7 +135,9 @@ public class PostingFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        Log.d("Masuk", "sdfs2");
         if (resultCode == Activity.RESULT_OK) {
+            Log.d("Masuk", "sdfs");
             if (requestCode == CROP_IMG) {
                 //onSelectFromGalleryResult(data);
                 ((MainActivity) getActivity()).addfragment(new ShareToFragment(), "ShareTo");

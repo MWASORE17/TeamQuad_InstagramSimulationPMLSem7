@@ -17,6 +17,7 @@ import com.example.chyntia.simulasi_ig.view.model.entity.User;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
 import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
 import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.model.UserProfileSearch;
 import com.example.chyntia.simulasi_ig.view.network.response.CResponse;
 import com.squareup.picasso.Picasso;
 
@@ -35,7 +36,7 @@ import static com.example.chyntia.simulasi_ig.R.drawable.btn_follow;
  */
 
 public class FollowingRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    List<User> user;
+    List<UserProfileSearch> user;
     Context context;
     private boolean isButtonClicked = false;
 //    LoginDBAdapter loginDBAdapter;
@@ -43,7 +44,7 @@ public class FollowingRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     String userName;
     String token;
 
-    public FollowingRVAdapter(List<User> user, Context context) {
+    public FollowingRVAdapter(List<UserProfileSearch> user, Context context) {
         this.user = user;
         this.context = context;
         session = new SessionManager(context);
@@ -65,7 +66,7 @@ public class FollowingRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder,int position) {
         final FollowingRVAdapter.ViewHolder _holder = (FollowingRVAdapter.ViewHolder) holder;
-        final User _user = this.user.get(position);
+        final UserProfileSearch _user = this.user.get(position);
         //Use the provided View Holder on the onCreateViewHolder method to populate the current row on the RecyclerView
         _holder.nama.setText(_user.getUserName());
 
@@ -98,7 +99,7 @@ public class FollowingRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         return Math.round((float)dp * density);
     }
 
-    public void follow_states(View v, ViewHolder _holder, final User user){
+    public void follow_states(View v, ViewHolder _holder, final UserProfileSearch user){
         if (v.getId() == R.id.btn) {
             isButtonClicked = !isButtonClicked; // toggle the boolean flag
             /** FOLLOW */
@@ -158,7 +159,7 @@ public class FollowingRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     // Insert a new item to the RecyclerView on a predefined position
-    public void insert(int position, User dataFollow) {
+    public void insert(int position, UserProfileSearch dataFollow) {
         user.add(position, dataFollow);
         notifyItemInserted(position);
     }

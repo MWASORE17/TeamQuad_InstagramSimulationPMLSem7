@@ -20,6 +20,7 @@ import com.example.chyntia.simulasi_ig.R;
 import com.example.chyntia.simulasi_ig.view.activity.MainActivity;
 import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.ProfileVPAdapter;
+import com.example.chyntia.simulasi_ig.view.enumeration.TransEnum;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
 import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
 import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
@@ -353,6 +354,7 @@ public class UserProfileFragment extends Fragment {
                                 .load(ApiRetrofit.URL + data.getData().getImagePath())
                                 .resize(dpToPx(80), dpToPx(80))
                                 .centerCrop()
+                                .error(R.drawable.ic_account_circle_black_128dp)
                                 .into(profile_pp);
                     }
                     else{
@@ -448,19 +450,15 @@ public class UserProfileFragment extends Fragment {
                         btn_follow.setBackgroundResource(R.drawable.btn_follow);
                     }
 
-                    Log.d("tes_post", user.getToken());
-
-
-                            if(user.getTotalPosts() >0){
-                                viewPagerProfile.setAdapter(new ProfileVPAdapter(getChildFragmentManager(), user.getToken()));
-                                tabLayoutProfile.setupWithViewPager(viewPagerProfile);
-                                setupTabIcons();
-                            }
-                            else{
-                                changefragment(new ProfileViewFragment(), "ProfileView");
-                                viewPagerProfile.setVisibility(View.GONE);
-                                Log.e("user post", data.getMessage());
-                            }
+                    if(user.getTotalPosts() >0){
+                        viewPagerProfile.setAdapter(new ProfileVPAdapter(getChildFragmentManager(), user.getToken(), TransEnum.SEARCH_IMAGE));
+                        tabLayoutProfile.setupWithViewPager(viewPagerProfile);
+                        setupTabIcons();
+                    }
+                    else{
+                        changefragment(new ProfileViewFragment(), "ProfileView");
+                        viewPagerProfile.setVisibility(View.GONE);
+                    }
 
                             /*if(data.isStatus()){
                                 UserTabGridFragment utgf = new UserTabGridFragment();
@@ -480,14 +478,16 @@ public class UserProfileFragment extends Fragment {
 
                 }
                 else{
-                    Log.d("Error", data.getMessage());
+                    changefragment(new ProfileViewFragment(), "ProfileView");
+                    viewPagerProfile.setVisibility(View.GONE);
                     profile_pp.setImageResource(R.drawable.ic_account_circle_black_128dp);
                 }
             }
 
             @Override
             public void onFailure(Call<UserProfileSearchResponse> call, Throwable t) {
-                Log.e("ERR", String.valueOf(t.getMessage()));                profile_pp.setImageResource(R.drawable.ic_account_circle_black_128dp);
+//                Log.e("ERR", String.valueOf(t.getMessage()));
+                profile_pp.setImageResource(R.drawable.ic_account_circle_black_128dp);
             }
         });
 

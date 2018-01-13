@@ -13,6 +13,7 @@ import com.example.chyntia.simulasi_ig.R;
 import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.ProfileVPAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.TabGridRVAdapter;
+import com.example.chyntia.simulasi_ig.view.enumeration.TransEnum;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
 import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
 import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
@@ -35,17 +36,18 @@ public class TabGridFragment extends Fragment{
 //    LoginDBAdapter loginDBAdapter;
     String userName;
     String token;
+    TransEnum transEnum;
 
     public TabGridFragment() {
         // Required empty public constructor
     }
 
-    public static TabGridFragment newInstance(String token) {
+    public static TabGridFragment newInstance(String token, TransEnum transEnum) {
         TabGridFragment utgf = new TabGridFragment();
         Bundle args = new Bundle();
         args.putString("USERNAME", token);
+        args.putSerializable("ENUM", transEnum);
         utgf.setArguments(args);
-        Log.i("tes_post2", "new Instance" + token);
         return utgf;
     }
 
@@ -53,9 +55,9 @@ public class TabGridFragment extends Fragment{
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         token = getArguments().getString("USERNAME");
+        transEnum = (TransEnum) getArguments().getSerializable("ENUM");
         session = new SessionManager(getContext());
         HashMap<String, String> user = session.getUserDetails();
-        Log.d("tes_post2", "on Create" + token);
         // name
         userName = user.get(SessionManager.KEY_USERNAME);
     }
@@ -78,7 +80,6 @@ public class TabGridFragment extends Fragment{
     }
 
     private void setupRV(){
-        Log.d("tes_post2", "Setup RV" + token);
 
         /** POST */
         ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
@@ -87,20 +88,20 @@ public class TabGridFragment extends Fragment{
             @Override
             public void onResponse(Call<PostsResponse> call, Response<PostsResponse> response) {
                 PostsResponse data = response.body();
-                Log.d("tes_post23", token);
                 if(data.isStatus()){
-                    TabGridRVAdapter adapter = new TabGridRVAdapter(data.getFeeds(), getActivity().getApplication());
+                    TabGridRVAdapter adapter = new TabGridRVAdapter(data.getFeeds(), getActivity().getApplication(), transEnum);
                     rv.setAdapter(adapter);
                     rv.setLayoutManager(new GridLayoutManager(getContext(),3));
                 }
                 else{
-                    Log.e("user post", data.getMessage());
+//                    Log.e("user post", data.getMessage());
                 }
             }
 
             @Override
             public void onFailure(Call<PostsResponse> call, Throwable t) {
-                Log.e("ERR", String.valueOf(t.getMessage()));            }
+//                Log.e("ERR", String.valueOf(t.getMessage()));
+            }
         });
     }
 }

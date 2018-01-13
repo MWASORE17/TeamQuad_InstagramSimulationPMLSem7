@@ -18,6 +18,7 @@ import android.widget.Toast;
 import com.example.chyntia.simulasi_ig.R;
 import com.example.chyntia.simulasi_ig.view.adapter.HomeRVAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
+import com.example.chyntia.simulasi_ig.view.enumeration.TransEnum;
 import com.example.chyntia.simulasi_ig.view.model.entity.Data_TL;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
 import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
@@ -49,14 +50,16 @@ public class TabDetailFragment extends Fragment {
     SessionManager session;
     String userName;
     String token;
+    TransEnum transEnum;
 
     public TabDetailFragment() {
         // Required empty public constructor
     }
 
-    public static TabDetailFragment newInstance(String token) {
+    public static TabDetailFragment newInstance(String token, TransEnum transEnum) {
         Bundle args = new Bundle();
         args.putString(ARG_PAGE, token);
+        args.putSerializable("ENUM", transEnum);
         TabDetailFragment fragment = new TabDetailFragment();
         fragment.setArguments(args);
         return fragment;
@@ -66,6 +69,7 @@ public class TabDetailFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         token = getArguments().getString(ARG_PAGE);
+        transEnum = (TransEnum) getArguments().getSerializable("ENUM");
     }
 
     // Inflate the view for the fragment based on layout XML
@@ -105,7 +109,7 @@ public class TabDetailFragment extends Fragment {
 
                 if(data.isStatus()){
                     if(data.getFeeds().size() > 0){
-                        HomeRVAdapter adapter = new HomeRVAdapter(data.getFeeds(), getActivity().getApplication());
+                        HomeRVAdapter adapter = new HomeRVAdapter(data.getFeeds(), getActivity().getApplication(), transEnum);
                         rv.setAdapter(adapter);
                         SnappyLinearLayoutManager layoutManager = new SnappyLinearLayoutManager(getActivity().getApplicationContext());
                         layoutManager.setSnapType(SnapType.CENTER);
@@ -119,13 +123,13 @@ public class TabDetailFragment extends Fragment {
                 }
                 else{
                     rv.setVisibility(View.GONE);
-                    Log.e("ERR", data.getMessage());
+//                    Log.e("ERR", data.getMessage());
                 }
             }
 
             @Override
             public void onFailure(Call<PostsResponse> call, Throwable t) {
-                Log.e("ERR", String.valueOf(t.getMessage()));
+//                Log.e("ERR", String.valueOf(t.getMessage()));
             }
         });
     }

@@ -9,7 +9,8 @@ class Api extends MY_Controller{
 		header('Content-type: application/json');
 		header('Access-Control-Allow-Origin: *');
 		header('Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS');
-		header('Access-Control-Allow-Headers: Content-Type, Content-Range, Content-Disposition, Content-Description');
+		header('Connection: close');
+		// header('Access-Control-Allow-Headers: Content-Type, Content-Range, Content-Disposition, Content-Description');
 	}
     
 	function GetUserByToken($token){
@@ -73,7 +74,7 @@ class Api extends MY_Controller{
 		}
 
 		$image = $this->input->post('image');
-		$ImagePath = $username['UserName'] . mktime(). ".jpg";
+		$ImagePath = $username['UserName'] . time() . ".jpg";
 		file_put_contents("assets/images/uploaded/".$ImagePath, base64_decode($image));
 
 		$insertdata = array(
@@ -128,12 +129,12 @@ class Api extends MY_Controller{
 	
 	function getFeeds($token){
 		if(!$token){
-			ShowJsonError("Token Kosong");
+			ShowJsonError("Token Kosong", array());
 			return;
 		}
 		$username = $this->db->where('Token',$token)->get('users')->row_array();
 		if(empty($username)){
-			ShowJsonError("Username tidak ditemukan");
+			ShowJsonError("Username tidak ditemukan", array());
 			return;
 		}
 		
@@ -155,7 +156,7 @@ class Api extends MY_Controller{
 		$count = $query->num_rows();
 
 		if(!$count){
-			ShowJsonError('Data tidak ditemukan');
+			ShowJsonError('Belum melakukan post', array());
 			return;
 		}
 		$data = array("status" => true, "message" => "get Timeline Success", "data" => $query->result());
@@ -165,12 +166,12 @@ class Api extends MY_Controller{
 
 	function getPostUser($token){
 		if(!$token){
-			ShowJsonError("Token Kosong");
+			ShowJsonError("Token Kosong", array());
 			return;
 		}
 		$username = $this->db->where('Token',$token)->get('users')->row_array();
 		if(empty($username)){
-			ShowJsonError("Username tidak ditemukan");
+			ShowJsonError("Username tidak ditemukan", array());
 			return;
 		}
 		
@@ -192,7 +193,7 @@ class Api extends MY_Controller{
 		$count = $query->num_rows();
 
 		if(!$count){
-			ShowJsonError('Data tidak ditemukan');
+			ShowJsonError('Data tidak ditemukan', array());
 			return;
 		}
 		$data = array("status" => true, "message" => "get User Post Success", "data" => $query->result());
@@ -272,22 +273,13 @@ class Api extends MY_Controller{
 			ShowJsonError('Token kosong');
 			return;
 		}
-		$username = $this->GetUserByToken($token);
-
+		$username = $this->db->where('Token',$token)->get('users')->row_array();
 		if(empty($username)){
-			ShowJsonError('Username tidak ditemukan');
+			ShowJsonError("Username tidak ditemukan");
 			return;
 		}
-		$this->db->where('UserName', $username);
-		$a = $this->db->get('users')->row_array();
-		$res = array(
-			'UserName' => $a['UserName'],
-			'Email' => $a['Email'],
-			'Name' => $a['Name'],
-			'ImagePath' => $a['ImagePath'],
-		);
 		
-		ShowJsonSuccess("Get Account Success", $res);
+		ShowJsonSuccess("Get Account Success", $username);
 	}
 
 	function GetUserProfile(){
@@ -465,7 +457,7 @@ class Api extends MY_Controller{
 			ShowJsonError('Token kosong');
 			return;
 		}
-		if(empty($this->input->post('Email'))){
+		if(empty($this->input->post('email'))){
 			ShowJsonError('Email kosong');
 			return;
 		}
@@ -476,11 +468,26 @@ class Api extends MY_Controller{
 			return;
 		}
 		
-		$insertdata = array(
-			'Name'=>$this->input->post('Name') ? $this->input->post('Name') : null,
-			'ImagePath'=>$this->input->post('ImagePath') ? $this->input->post('ImagePath') : null,
-			'Email'=>$this->input->post('Email') ? $this->input->post('Email') : null,
-		);
+		$image = $this->input->post('image');
+		if($image != ""){
+			$ImagePath = $username . time() . ".jpg";
+			file_put_contents("assets/images/uploaded/".$ImagePath, base64_decode($image));
+
+			$insertdata = array(
+				'Name'=>$this->input->post('name') ? $this->input->post('name') : null,
+				'UserName'=>$this->input->post('username') ? $this->input->post('username') : null,
+				'ImagePath'=>$ImagePath,
+				'Email'=>$this->input->post('email') ? $this->input->post('email') : null,
+			);
+		}
+		else{
+				$insertdata = array(
+				'UserName'=>$this->input->post('username') ? $this->input->post('username') : null,
+				'Name'=>$this->input->post('name') ? $this->input->post('name') : null,
+				'Email'=>$this->input->post('email') ? $this->input->post('email') : null,
+			);
+		}
+		
 		$this->db->where('UserName',$username);
 		$this->db->update('users',$insertdata);
 	
@@ -640,33 +647,27 @@ class Api extends MY_Controller{
 
 	function getRecommendation($token){
 		if(empty($token)){
-			ShowJsonError('Token kosong');
+			ShowJsonError('Token kosong', array());
 			return;
 		}
 
 		$username = $this->db->where('Token',$token)->get('users')->row_array();
 		if(empty($username)){
-			ShowJsonError('Username tidak ditemukan');
+			ShowJsonError('Username tidak ditemukan', array());
 			return;
 		}
 
 		$query = $this->db->query("
 			Select u.id, u.UserName, u.Name, u.Email, u.ImagePath, u.Password, u.Token
-				from users u
-					left join follow f on u.id = f.user_id 
-						where u.id <> '". $username['id'] ."' AND
-			            	u.id not in 
-			                (Select f.follow_user_id
-											from users u 
-												left join follow f on u.id = f.user_id 
-										        	where u.id = '". $username['id'] ."')");
+from users u where u.id <> '". $username['id'] ."' and
+u.id not in
+(Select COALESCE(f.follow_user_id, 0) from users u left join follow f on u.id = f.user_id where u.id = '". $username['id'] ."')
+			");
 		if($query->num_rows() == 0){
-			ShowJsonError("No Recommendation");
+			ShowJsonError("No Recommendation", array());
 			return;
 		}
 		ShowJsonSuccess("Success get Recommendation", $query->result());
-
-
 	}
 
 	function getFollowingNotif($token){
@@ -767,8 +768,10 @@ a Order By created_on DESC
 			return;
 		}
 
-		$query = $this->db->query("Select u.id, u.UserName, u.Name, u.Email, u.ImagePath, u.Password, u.Token 
-				from users u inner join follow f on f.user_id = u.id where follow_user_id = '". $username['id'] ."'");
+		$query = $this->db->query("Select u.id, u.UserName, u.Name, u.Email, u.ImagePath, u.Password, u.Token,
+		(Select count(*) from follow ff where ff.user_id = '". $username['id'] ."' and ff.follow_user_id = f.user_id) as IsFollowing 
+				from users u inner join follow f on f.user_id = u.id 
+				where follow_user_id = '". $username['id'] ."'");
 		if($query->num_rows() == 0){
 			ShowJsonError("Tidak ada Follower");
 			return;

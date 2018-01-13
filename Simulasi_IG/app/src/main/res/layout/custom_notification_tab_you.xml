@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal" android:layout_width="match_parent"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
     <de.hdodenhof.circleimageview.CircleImageView
@@ -29,6 +31,7 @@
             android:layout_marginTop="10dp"
             android:text="Nama"
             android:textColor="#000000"
+            android:textStyle="bold"
             android:textSize="15sp"/>
 
         <TextView
@@ -55,33 +58,38 @@
 
     </RelativeLayout>
 
-    <Button
-        android:id="@+id/btn_notif"
-        android:layout_height="30dp"
-        android:layout_width="100dp"
-        android:layout_toRightOf="@id/notif_area"
-        android:text="Follow"
-        android:layout_marginTop="10dp"
-        android:layout_alignParentRight="true"
-        android:textSize="12sp"
-        android:textAlignment="center"
-        android:textAllCaps="false"
-        android:layout_marginLeft="3dp"
-        android:padding="6dp"
-        android:visibility="gone"
-        android:onClick="follow_states"
-        android:background="@drawable/btn_follow"
-        android:textColor="@color/colorAccent"
-        android:elevation="2dp"/>
-
-    <ImageView
-        android:id="@+id/photo_notif"
-        android:layout_width="60dip"
-        android:layout_height="60dip"
-        android:layout_marginTop="10dp"
-        android:layout_marginLeft="10dp"
-        android:visibility="gone"
-        android:adjustViewBounds="true"
-        android:scaleType="centerCrop" />
-
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <Button
+            android:id="@+id/btn_notif"
+            android:layout_height="30dp"
+            android:layout_width="100dp"
+            android:text="Follow"
+            android:layout_marginTop="10dp"
+            android:layout_alignParentRight="true"
+            android:textSize="12sp"
+            android:textAlignment="center"
+            android:textAllCaps="false"
+            android:layout_marginLeft="3dp"
+            android:layout_marginRight="15dp"
+            android:padding="6dp"
+            android:visibility="gone"
+            android:onClick="follow_states"
+            android:background="@drawable/btn_follow"
+            android:textColor="@color/colorAccent"
+            android:elevation="2dp"/>
+        <ImageView
+            android:id="@+id/photo_notif"
+            android:layout_width="60dip"
+            android:layout_height="60dip"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="15dp"
+            android:visibility="gone"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:adjustViewBounds="true"
+            android:scaleType="centerCrop" />
+    </RelativeLayout>
 </LinearLayout>

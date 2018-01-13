@@ -5,7 +5,6 @@ package com.example.chyntia.simulasi_ig.view.network.model;
  */
 
 public class Notif {
-
     private String Type;
     private int id;
     private String UserName;

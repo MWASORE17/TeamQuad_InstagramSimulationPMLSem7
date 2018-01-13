@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import com.example.chyntia.simulasi_ig.R;
 import com.example.chyntia.simulasi_ig.view.activity.MainActivity;
+import com.example.chyntia.simulasi_ig.view.enumeration.TransEnum;
 import com.example.chyntia.simulasi_ig.view.fragment.user.UserCommentFragment;
 import com.example.chyntia.simulasi_ig.view.model.entity.Data_TL;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
@@ -43,6 +44,7 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     LoginDBAdapter loginDBAdapter;
     String userName;
     SessionManager session;
+    TransEnum transEnum;
     boolean isLike = false;
     boolean curr_state;
     private static final int SECOND_MILLIS = 1000;
@@ -50,9 +52,9 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     private static final int HOUR_MILLIS = 60 * MINUTE_MILLIS;
     private static final int DAY_MILLIS = 24 * HOUR_MILLIS;
 
-    public HomeRVAdapter(ArrayList<PostDetail> user, Context context) {
+    public HomeRVAdapter(ArrayList<PostDetail> user, Context context, TransEnum transEnum) {
         session = new SessionManager(context);
-
+        this.transEnum = transEnum;
         this.user = user;
         this.context = context;
     }
@@ -92,7 +94,7 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                 final Bundle args = new Bundle();
                 args.putInt("POSITION", position);
                 ucf.setArguments(args);
-                ((MainActivity) v.getContext()).changefragment(ucf, "UserComment");
+                ((MainActivity) v.getContext()).addfragment(ucf, "UserComment");
             }
         });
 
@@ -115,7 +117,7 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                     final Bundle args = new Bundle();
                     args.putInt("POSITION", position);
                     ucf.setArguments(args);
-                    ((MainActivity) v.getContext()).changefragment(ucf, "UserComment");
+                    ((MainActivity) v.getContext()).addfragment(ucf, "UserComment");
                 }
             });
         }
@@ -158,16 +160,17 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                         CResponse data = response.body();
 
                         if(data.isStatus()){
-                            Log.i("Success IG", data.getMessage());
+//                            Log.i("Success IG", data.getMessage());
                         }
                         else{
-                            Log.e("Failed IG", data.getMessage());
+//                            Log.e("Failed IG", data.getMessage());
                         }
                     }
 
                     @Override
                     public void onFailure(Call<CResponse> call, Throwable t) {
-                        Log.e("ERR", String.valueOf(t.getMessage()));                    }
+//                        Log.e("ERR", String.valueOf(t.getMessage()));
+                    }
                 });
 
                 /** Insert Notif*/
@@ -198,16 +201,17 @@ public class HomeRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
                         CResponse data = response.body();
 
                         if(data.isStatus()){
-                            Log.i("Success IG", data.getMessage());
+//                            Log.i("Success IG", data.getMessage());
                         }
                         else{
-                            Log.e("Failed IG", data.getMessage());
+//                            Log.e("Failed IG", data.getMessage());
                         }
                     }
 
                     @Override
                     public void onFailure(Call<CResponse> call, Throwable t) {
-                        Log.e("ERR", String.valueOf(t.getMessage()));                    }
+//                        Log.e("ERR", String.valueOf(t.getMessage()));
+                    }
                 });
 
                 user.get(position).setTotalLikes(user.get(position).getTotalLikes()-1);

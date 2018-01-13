@@ -15,16 +15,10 @@ public class ApiRetrofit {
     public static Retrofit retrofit;
 
     public static Retrofit getApiClient(){
-
         if(retrofit == null){
-            HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
-            interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-            OkHttpClient client = new OkHttpClient.Builder().addInterceptor(interceptor).build();
-            
             retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
                     .addConverterFactory(GsonConverterFactory.create())
-                    .client(client)
                     .build();
         }
         return retrofit;

@@ -2,6 +2,7 @@ package com.example.chyntia.simulasi_ig.view.network;
 
 import com.example.chyntia.simulasi_ig.view.network.model.Notif;
 import com.example.chyntia.simulasi_ig.view.network.model.PostDetail;
+import com.example.chyntia.simulasi_ig.view.network.model.UserProfileSearch;
 import com.example.chyntia.simulasi_ig.view.network.response.CResponse;
 import com.example.chyntia.simulasi_ig.view.network.response.CommentResponse;
 import com.example.chyntia.simulasi_ig.view.network.response.NotifResponse;
@@ -42,8 +43,18 @@ public interface ApiRoute {
     @FormUrlEncoded
     @POST("GetUserProfile")
     Call<UserProfileResponse> GetUserProfile(@Field("token") String token);
-    /** ================== S */
 
+    @FormUrlEncoded
+    @POST("updateaccount")
+    Call<CResponse> EditProfile(
+            @Field("token") String token,
+            @Field("name") String name,
+            @Field("username") String username,
+            @Field("email") String email,
+            @Field("image") String image
+    );
+
+    /** ================== S */
 
     @GET("getPostUser/{token}")
     Call<PostsResponse> getAccountPosts(@Path("token") String token);

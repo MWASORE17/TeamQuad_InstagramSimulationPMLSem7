@@ -10,6 +10,7 @@ import android.widget.ImageView;
 
 import com.example.chyntia.simulasi_ig.R;
 import com.example.chyntia.simulasi_ig.view.activity.MainActivity;
+import com.example.chyntia.simulasi_ig.view.enumeration.TransEnum;
 import com.example.chyntia.simulasi_ig.view.fragment.user.PhotoDetailFragment;
 import com.example.chyntia.simulasi_ig.view.model.entity.Data_Follow;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
@@ -31,10 +32,12 @@ public class TabGridRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 //    LoginDBAdapter loginDBAdapter;
     SessionManager session;
     String userName;
+    TransEnum transEnum;
 
-    public TabGridRVAdapter(List<PostDetail> user, Context context) {
+    public TabGridRVAdapter(List<PostDetail> user, Context context, TransEnum transEnum) {
         this.user = user;
         this.context = context;
+        this.transEnum = transEnum;
     }
 
     @Override
@@ -70,7 +73,16 @@ public class TabGridRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 final Bundle args = new Bundle();
                 args.putInt("POSITION", position);
                 pdf.setArguments(args);
-                ((MainActivity) v.getContext()).changefragment(pdf, "PhotoDetail");
+
+                /*switch (transEnum){
+                    case USER_IMAGE:
+                        ((MainActivity) v.getContext()).changefragment(pdf, "PhotoDetail");
+                        break;
+                    case SEARCH_IMAGE:
+                        ((MainActivity) v.getContext()).addfragment(pdf, "PhotoDetail");
+                        break;
+                }*/
+                ((MainActivity) v.getContext()).addfragment(pdf, "PhotoDetail");
             }
         });
         //animate(holder);

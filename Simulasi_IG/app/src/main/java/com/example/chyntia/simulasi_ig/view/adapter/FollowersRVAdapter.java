@@ -16,7 +16,9 @@ import com.example.chyntia.simulasi_ig.view.model.entity.User;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
 import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
 import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.model.UserProfileSearch;
 import com.example.chyntia.simulasi_ig.view.network.response.CResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.UserProfileSearchResponse;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
@@ -34,7 +36,7 @@ import static com.example.chyntia.simulasi_ig.R.drawable.btn_follow;
  */
 
 public class FollowersRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    List<User> user;
+    List<UserProfileSearch> user;
     Context context;
     private boolean isButtonClicked = false;
 //    LoginDBAdapter loginDBAdapter;
@@ -42,7 +44,7 @@ public class FollowersRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     String userName;
     String token;
 
-    public FollowersRVAdapter(List<User> user, Context context) {
+    public FollowersRVAdapter(List<UserProfileSearch> user, Context context) {
         this.user = user;
         this.context = context;
         session = new SessionManager(context);
@@ -63,7 +65,7 @@ public class FollowersRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         final FollowersRVAdapter.ViewHolder _holder = (FollowersRVAdapter.ViewHolder) holder;
-        final User _user = this.user.get(position);
+        final UserProfileSearch _user = this.user.get(position);
         //Use the provided View Holder on the onCreateViewHolder method to populate the current row on the RecyclerView
         _holder.nama.setText(_user.getUserName());
 
@@ -79,21 +81,22 @@ public class FollowersRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         else
             _holder.pp.setImageResource(R.drawable.ic_account_circle_black_24dp);
 
-        /*_holder.btn.setText(_user.status);
-        if(_user.status == "Follow"){
+        if(_user.getIsFollowing() == 1) {
+            _holder.btn.setText("Following");
+            _holder.btn.setTextColor(Color.BLACK);
+            _holder.btn.setBackgroundResource(R.drawable.btn_following);
+        }
+        else{
+            _holder.btn.setText("Follow");
             _holder.btn.setTextColor(Color.WHITE);
             _holder.btn.setBackgroundResource(R.drawable.btn_follow);
         }
-        else{
-            _holder.btn.setTextColor(Color.BLACK);
-            _holder.btn.setBackgroundResource(R.drawable.btn_following);
-        }*/
 
         _holder.btn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-
-                isButtonClicked = !isButtonClicked; // toggle the boolean flag
+                if(_user.getIsFollowing() == 0)
+                    isButtonClicked = !isButtonClicked;
 
                 /** FOLLOW */
                 if(isButtonClicked){
@@ -160,7 +163,7 @@ public class FollowersRVAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     // Insert a new item to the RecyclerView on a predefined position
-    public void insert(int position, User dataFollow) {
+    public void insert(int position, UserProfileSearch dataFollow) {
         user.add(position, dataFollow);
         notifyItemInserted(position);
     }

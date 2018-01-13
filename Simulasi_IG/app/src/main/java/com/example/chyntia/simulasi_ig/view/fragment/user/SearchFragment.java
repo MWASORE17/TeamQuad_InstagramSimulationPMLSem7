@@ -171,12 +171,13 @@ public class SearchFragment extends Fragment {
                                 rv.setVisibility(View.GONE);
                                 tv_userNotFound.setVisibility(View.VISIBLE);
                             }
-                            Log.d("Search Error", data.getMessage());
+//                            Log.d("Search Error", data.getMessage());
                         }
 
                         @Override
                         public void onFailure(Call<SearchResponse> call, Throwable t) {
-                            Log.e("ERR", String.valueOf(t.getMessage()));                        }
+//                            Log.e("ERR", String.valueOf(t.getMessage()));
+                        }
                     });
 
                     return true;

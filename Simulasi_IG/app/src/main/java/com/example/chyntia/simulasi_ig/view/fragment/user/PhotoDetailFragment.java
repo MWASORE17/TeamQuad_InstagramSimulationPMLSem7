@@ -54,7 +54,6 @@ public class PhotoDetailFragment extends Fragment{
     private static final int DAY_MILLIS = 24 * HOUR_MILLIS;
 
     private PostDetail post;
-    private String token;
 
     public PhotoDetailFragment() {
         // Required empty public constructor
@@ -231,7 +230,7 @@ public class PhotoDetailFragment extends Fragment{
 
             @Override
             public void onFailure(Call<PostDetailResponse> call, Throwable t) {
-                Log.e("ERR", String.valueOf(t.getMessage()));
+//                Log.e("ERR", String.valueOf(t.getMessage()));
             }
         });
 
@@ -251,16 +250,17 @@ public class PhotoDetailFragment extends Fragment{
                         CResponse data = response.body();
 
                         if(data.isStatus()){
-                            Log.i("Success IG", data.getMessage());
+//                            Log.i("Success IG", data.getMessage());
                         }
                         else{
-                            Log.e("Failed IG", data.getMessage());
+//                            Log.e("Failed IG", data.getMessage());
                         }
                     }
 
                     @Override
                     public void onFailure(Call<CResponse> call, Throwable t) {
-                        Log.e("ERR", String.valueOf(t.getMessage()));                    }
+//                        Log.e("ERR", String.valueOf(t.getMessage()));
+                    }
                 });
 
                 /** Insert Notif*/
@@ -280,7 +280,7 @@ public class PhotoDetailFragment extends Fragment{
             @Override
             public void unLiked(LikeButton likeButton) {
                 count_likes.setVisibility(View.VISIBLE);
-
+                String token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
                 ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
                 Call<CResponse> call = apiRoute.postUnLike(token, post.getPostID());
                 call.enqueue(new Callback<CResponse>() {
@@ -289,16 +289,17 @@ public class PhotoDetailFragment extends Fragment{
                         CResponse data = response.body();
 
                         if(data.isStatus()){
-                            Log.i("Success IG", data.getMessage());
+//                            Log.i("Success IG", data.getMessage());
                         }
                         else{
-                            Log.e("Failed IG", data.getMessage());
+//                            Log.e("Failed IG", data.getMessage());
                         }
                     }
 
                     @Override
                     public void onFailure(Call<CResponse> call, Throwable t) {
-                        Log.e("ERR", String.valueOf(t.getMessage()));                    }
+//                        Log.e("ERR", String.valueOf(t.getMessage()));
+                    }
                 });
 
                 post.setTotalLikes(post.getTotalLikes()-1);

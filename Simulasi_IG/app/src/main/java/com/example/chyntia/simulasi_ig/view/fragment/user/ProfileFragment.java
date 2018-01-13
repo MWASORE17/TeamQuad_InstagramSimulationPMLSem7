@@ -20,6 +20,7 @@ import android.widget.TextView;
 import com.example.chyntia.simulasi_ig.R;
 import com.example.chyntia.simulasi_ig.view.activity.MainActivity;
 import com.example.chyntia.simulasi_ig.view.adapter.ProfileVPAdapter;
+import com.example.chyntia.simulasi_ig.view.enumeration.TransEnum;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
 import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
 import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
@@ -210,6 +211,7 @@ public class ProfileFragment extends Fragment {
                                 .load(ApiRetrofit.URL + data.getData().getImagePath())
                                 /*.resize(dpToPx(80), dpToPx(80))
                                 .centerCrop()*/
+                                .error(R.drawable.ic_account_circle_black_128dp)
                                 .into(profile_pp);
                     }
                     else{
@@ -296,8 +298,7 @@ public class ProfileFragment extends Fragment {
                     Log.d("tes_post", user.getToken());
 
                     if(user.getTotalPosts() > 0){
-                        Log.d("tes_post", user.getToken());
-                        viewPagerProfile.setAdapter(new ProfileVPAdapter(getChildFragmentManager(), token));
+                        viewPagerProfile.setAdapter(new ProfileVPAdapter(getChildFragmentManager(), token, TransEnum.USER_IMAGE));
                         //viewPagerProfile.setCurrentItem(0);
                         tabLayoutProfile.setupWithViewPager(viewPagerProfile);
                         setupTabIcons();
@@ -305,19 +306,22 @@ public class ProfileFragment extends Fragment {
                     else{
                         changefragment(new ProfileViewFragment(), "ProfileView");
                         viewPagerProfile.setVisibility(View.GONE);
-                        Log.e("user post", data.getMessage());
+//                        Log.e("user post", data.getMessage());
                     }
 
                 }
                 else{
-                    Log.d("Error", data.getMessage());
+//                    Log.d("Error", data.getMessage());
+                    changefragment(new ProfileViewFragment(), "ProfileView");
+                    viewPagerProfile.setVisibility(View.GONE);
                     profile_pp.setImageResource(R.drawable.ic_account_circle_black_128dp);
                 }
             }
 
             @Override
             public void onFailure(Call<UserProfileResponse> call, Throwable t) {
-                Log.e("ERR", String.valueOf(t.getMessage()));                profile_pp.setImageResource(R.drawable.ic_account_circle_black_128dp);
+//                Log.e("ERR", String.valueOf(t.getMessage()));
+                profile_pp.setImageResource(R.drawable.ic_account_circle_black_128dp);
             }
         });
 

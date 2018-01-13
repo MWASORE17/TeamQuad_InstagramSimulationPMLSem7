@@ -138,6 +138,7 @@ public class ShareToFragment extends Fragment {
         ic_right.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                hideKeyboard(getContext());
                 SessionManager session = new SessionManager(getContext());
                 String token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
                 ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
@@ -165,7 +166,8 @@ public class ShareToFragment extends Fragment {
 
                     @Override
                     public void onFailure(Call<CResponse> call, Throwable t) {
-                        Log.e("ERR", String.valueOf(t.getMessage()));                    }
+//                        Log.e("ERR", String.valueOf(t.getMessage()));
+                    }
                 });
 
                 //PrettyTime p = new PrettyTime();

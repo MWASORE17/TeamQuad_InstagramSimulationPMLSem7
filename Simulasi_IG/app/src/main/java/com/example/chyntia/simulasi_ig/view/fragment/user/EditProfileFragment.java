@@ -16,6 +16,7 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.Image;
 import android.net.Uri;
@@ -47,9 +48,16 @@ import com.example.chyntia.simulasi_ig.view.activity.MainActivity;
 import com.example.chyntia.simulasi_ig.view.adapter.LoginDBAdapter;
 import com.example.chyntia.simulasi_ig.view.adapter.Spinner_Adapter;
 import com.example.chyntia.simulasi_ig.view.model.entity.Gender;
+import com.example.chyntia.simulasi_ig.view.model.entity.User;
 import com.example.chyntia.simulasi_ig.view.model.entity.session.SessionManager;
+import com.example.chyntia.simulasi_ig.view.network.ApiRetrofit;
+import com.example.chyntia.simulasi_ig.view.network.ApiRoute;
+import com.example.chyntia.simulasi_ig.view.network.response.CResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.UserProfileResponse;
+import com.example.chyntia.simulasi_ig.view.network.response.UserResponse;
 import com.example.chyntia.simulasi_ig.view.utilities.BottomNavigationViewHelper;
 import com.example.chyntia.simulasi_ig.view.utilities.CircleTransform;
+import com.example.chyntia.simulasi_ig.view.utilities.Encode;
 import com.example.chyntia.simulasi_ig.view.utilities.ImageFilePath;
 import com.example.chyntia.simulasi_ig.view.utilities.Utility;
 import com.rey.material.widget.ProgressView;
@@ -66,6 +74,9 @@ import java.util.HashMap;
 import java.util.Random;
 
 import jp.wasabeef.glide.transformations.CropCircleTransformation;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by Chyntia on 5/9/2017.
@@ -78,6 +89,7 @@ public class EditProfileFragment extends Fragment {
     final private int REQUEST_CAMERA = 1;
     final private int SELECT_FILE = 2;
     final private int CROP_IMG = 3;
+    boolean isImageChanged = false;
     String userChoosenTask;
     Uri selectedUri;
     Intent CropIntent;
@@ -86,10 +98,12 @@ public class EditProfileFragment extends Fragment {
     public static File file;
     SessionManager session;
     EditText ep_fullName, ep_userName, ep_email;
-    LoginDBAdapter loginDBAdapter;
+//    LoginDBAdapter loginDBAdapter;
     String userName;
     Spinner spinner;
     public static String selectedImagePath;
+    String token;
+    User _user;
 
     public EditProfileFragment() {
         // Required empty public constructor
@@ -108,22 +122,16 @@ public class EditProfileFragment extends Fragment {
 
     private void init(View view) {
 
-        loginDBAdapter = new LoginDBAdapter(getContext());
-        loginDBAdapter = loginDBAdapter.open();
-
         session = new SessionManager(getContext());
         HashMap<String, String> user = session.getUserDetails();
+        token = session.getUserDetails().get(SessionManager.KEY_USERNAME);
 
-        userName = user.get(SessionManager.KEY_USERNAME);
+        /*userName = user.get(SessionManager.KEY_USERNAME);*/
 
         ep_fullName = (EditText) view.findViewById(R.id.ep_fullName);
-        ep_fullName.setText(loginDBAdapter.getUserData(userName).get(1));
-
         ep_userName = (EditText) view.findViewById(R.id.ep_userName);
-        ep_userName.setText(loginDBAdapter.getUserData(userName).get(0));
-
         ep_email = (EditText) view.findViewById(R.id.ep_email);
-        ep_email.setText(loginDBAdapter.getUserData(userName).get(2));
+
 
         ArrayList<Gender> gender = new ArrayList<Gender>();
         gender.add(new Gender("Female", R.drawable.gender_female));
@@ -138,7 +146,40 @@ public class EditProfileFragment extends Fragment {
         ic_right = (ImageView) view.findViewById(R.id.icon_right);
 
         change_photo = (ImageView) view.findViewById(R.id.change_photo);
-        checkProfPic();
+
+        ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+        Call<UserResponse> call = apiRoute.getUserAccount(token);
+        call.enqueue(new Callback<UserResponse>() {
+            @Override
+            public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
+                UserResponse data = response.body();
+                if(data.isStatus()){
+                    _user = data.getUser();
+                    ep_fullName.setText(data.getUser().getName());
+                    ep_userName.setText(data.getUser().getUserName());
+                    ep_email.setText(data.getUser().getEmail());
+                    if(data.getUser().getImagePath() != ""){
+                        Picasso
+                                .with(getContext())
+                                .load(ApiRetrofit.URL + data.getUser().getImagePath())
+                                .resize(dpToPx(80), dpToPx(80))
+                                .centerCrop()
+                                .error(R.drawable.ic_account_circle_black_128dp)
+                                .into(change_photo);
+                    }
+                    else
+                        change_photo.setImageResource(R.drawable.ic_account_circle_black_128dp);
+                }
+                else{
+
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UserResponse> call, Throwable t) {
+
+            }
+        });
 
         ((MainActivity) view.getContext()).hide_bottom_nav_bar();
     }
@@ -169,12 +210,39 @@ public class EditProfileFragment extends Fragment {
         ic_right.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                updateData();
-                hideKeyboard(getContext());
-                ((MainActivity) getActivity()).show_bottom_nav_bar();
-                session = new SessionManager(getContext());
-                session.updatesession(ep_userName.getText().toString());
-                ((MainActivity) getActivity()).changefragment(new ProfileFragment(), "Profile");
+                if(isImageChanged == false){
+                    _user.setImagePath("");
+                }
+                else{
+                    _user.setImagePath(Encode.imageToString(
+                            ((BitmapDrawable) change_photo.getDrawable()).getBitmap()
+                    ));
+                }
+
+                ApiRoute apiRoute = ApiRetrofit.getApiClient().create(ApiRoute.class);
+                Call<CResponse> call = apiRoute.EditProfile(token, ep_fullName.getText().toString(), ep_userName.getText().toString(), ep_email.getText().toString(), _user.getImagePath());
+                call.enqueue(new Callback<CResponse>() {
+                    @Override
+                    public void onResponse(Call<CResponse> call, Response<CResponse> response) {
+                        CResponse data = response.body();
+                        if(data.isStatus()){
+                            isImageChanged = true;
+                            hideKeyboard(getContext());
+                            ((MainActivity) getActivity()).show_bottom_nav_bar();
+                            /*session = new SessionManager(getContext());
+                            session.updatesession(ep_userName.getText().toString());*/
+                            ((MainActivity) getActivity()).changefragment(new ProfileFragment(), "Profile");
+                        }
+                        else{
+
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<CResponse> call, Throwable t) {
+
+                    }
+                });
             }
         });
     }
@@ -267,10 +335,13 @@ public class EditProfileFragment extends Fragment {
                         .into(change_photo);
                 myAsyncTask = new MyAsyncTask();
                 myAsyncTask.execute();
+                isImageChanged = true;
             }
 
-            else if (requestCode == REQUEST_CAMERA)
+            else if (requestCode == REQUEST_CAMERA){
+                isImageChanged = true;
                 onCaptureImageResult(data);
+            }
         }
     }
 
@@ -284,7 +355,7 @@ public class EditProfileFragment extends Fragment {
         myAsyncTask.execute();
     }
 
-    private void SaveImage(Bitmap finalBitmap) {
+  /*  private void SaveImage(Bitmap finalBitmap) {
         String img_path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + "/Simulasi Instagram";
         File folder = new File(img_path);
         boolean success = true;
@@ -302,7 +373,7 @@ public class EditProfileFragment extends Fragment {
                 e.printStackTrace();
             }
         }
-    }
+    }*/
 
 
     private void onCaptureImageResult(Intent data) {
@@ -396,7 +467,7 @@ public class EditProfileFragment extends Fragment {
             super.onPreExecute();
             running = true;
 
-            loginDBAdapter.updateUserProfPic(loginDBAdapter.getID(userName),selectedImagePath);
+//            loginDBAdapter.updateUserProfPic(loginDBAdapter.getID(userName),selectedImagePath);
             progressDialog = ProgressDialog.show(getActivity(),"",
                     "Loading...");
 
@@ -414,8 +485,8 @@ public class EditProfileFragment extends Fragment {
             super.onPostExecute(aVoid);
 
             //getProfilePic();
-            ((MainActivity) getActivity()).changefragment(new ProfileFragment(), "Profile");
-            ((MainActivity) getActivity()).show_bottom_nav_bar();
+            /*((MainActivity) getActivity()).changefragment(new ProfileFragment(), "Profile");
+            ((MainActivity) getActivity()).show_bottom_nav_bar();*/
 
             Toast.makeText(getActivity(),
                     "Your Profile Picture was Changed",
@@ -437,21 +508,9 @@ public class EditProfileFragment extends Fragment {
         pf.setArguments(args);
     }*/
 
-    private void updateData(){
+   /* private void updateData(){
         loginDBAdapter.updateUserData(loginDBAdapter.getID(userName),ep_userName.getText().toString(),ep_fullName.getText().toString(),ep_email.getText().toString(),"");
-    }
+    }*/
 
-    private void checkProfPic(){
-        if(loginDBAdapter.checkProfPic(loginDBAdapter.getID(userName))!=null){
-            Picasso
-                    .with(getContext())
-                    .load(new File(loginDBAdapter.getUserProfPic(loginDBAdapter.getID(userName))))
-                    .resize(dpToPx(80), dpToPx(80))
-                    .centerCrop()
-                    .error(R.drawable.ic_account_circle_black_128dp)
-                    .into(change_photo);
-        }
-        else
-            change_photo.setImageResource(R.drawable.ic_account_circle_black_128dp);
-    }
+
 }

@@ -110,7 +110,7 @@ public class LoginFragment extends Fragment {
 
             @Override
             public void onFailure(Call<LoginResponse> call, Throwable t) {
-                Log.e("ERR", String.valueOf(t.getMessage()));
+//                Log.e("ERR", String.valueOf(t.getMessage()));
             }
         });
         /*}
